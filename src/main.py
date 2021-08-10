@@ -1,13 +1,12 @@
 import logging
+import os
 from func import delivery, url_short
 from aiogram import Bot, Dispatcher, executor, types, filters
-
-from config import API_TOKEN
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 # Initialize bot and dispatcher
-bot = Bot(token=API_TOKEN)
+bot = Bot(token=os.environ['ASTUDIO_BOT_TOKEN'])
 dp = Dispatcher(bot)
 
 
