@@ -1,6 +1,6 @@
 import logging
 import os
-from func import delivery, url_short
+from src.func import delivery, url_short
 from aiogram import Bot, Dispatcher, executor, types, filters
 
 # Configure logging
