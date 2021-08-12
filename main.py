@@ -23,7 +23,8 @@ async def url_shortener(message: types.Message):
     """
     При отправке ссылки возвращает сокращенную
     """
-    await bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, disable_web_page_preview=True)
+    await bot.edit_message_text(text=message.text, chat_id=message.chat.id, message_id=message.message_id,
+                                disable_web_page_preview=True)
     await message.answer(url_short(message.text))
 
 
