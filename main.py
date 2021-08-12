@@ -13,7 +13,7 @@ dp = Dispatcher(bot)
 @dp.message_handler(filters.Regexp(r'^\d{6}$'))
 async def mail_delivery_period(message: types.Message):
     """
-    При отправке 6 символов возвращает ответ Почты России по срокам доставки
+    If User message is 6 digit returns Russian post estimated delivery time
     """
     await message.answer(delivery(message.text))
 
@@ -21,10 +21,8 @@ async def mail_delivery_period(message: types.Message):
 @dp.message_handler(filters.Regexp(r'^(https?:\/\/)?([\w-]{1,32}\.[\w-]{1,32})[^\s@]*'))
 async def url_shortener(message: types.Message):
     """
-    При отправке ссылки возвращает сокращенную
+    If User message is URL, returns shortened_url
     """
-    await bot.edit_message_text(text=message.text, chat_id=message.chat.id, message_id=message.message_id,
-                                disable_web_page_preview=True)
     await message.answer(url_short(message.text))
 
 

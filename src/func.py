@@ -3,19 +3,21 @@ import json
 from datetime import datetime
 
 
-def delivery(pindex, weight=4000):
-    url_base = 'https://delivery.pochta.ru/v2/calculate/delivery?json&object=27030&from=125476'
-    params = f'&to={pindex}&weight={weight}&pack=40&date={datetime.now().strftime("%Y%m%d")}'
+def delivery(pindex: int, weight=4000, f_index=125476) -> str:
+    url_base = 'https://delivery.pochta.ru/v2/calculate/delivery?json&object=27030'
+    params = f'&from={f_index}&to={pindex}&weight={weight}&pack=40&date={datetime.now().strftime("%Y%m%d")}'
     http = urllib3.PoolManager()
-    rjs = json.loads(http.urlopen('GET', url_base + params).data)
+    resp_json = json.loads(http.urlopen('GET', url_base + params).data)
     try:
-        return f'~{rjs["delivery"]["max"] + 2} дней,до {datetime.strptime(rjs["delivery"]["deadline"][0:8], "%Y%m%d").strftime("%d.%m.%Y")}'
+        delivery_days = {resp_json["delivery"]["max"]}
+        delivery_deadline = datetime.strptime(resp_json["delivery"]["deadline"][0:8], "%Y%m%d").strftime("%d.%m.%Y")
+        return f'~{delivery_days} дней, до {delivery_deadline}'
     except KeyError:
-        return rjs['errors'][0]['msg']
-    
-    
-def url_short(url):
+        return resp_json['errors'][0]['msg']
+
+
+def url_short(url: str) -> str:
     url_long = 'https://clck.ru/--?url=' + url
     http = urllib3.PoolManager()
     url_sh = http.urlopen('GET', url_long).data
-    return str(url_sh)[2:-1]
+    return url_sh.decode('UTF-8')
