@@ -10,7 +10,7 @@ bot = Bot(token=os.environ['ASTUDIO_BOT_TOKEN'])
 dp = Dispatcher(bot)
 
 
-@dp.message_handler(filters.Regexp(r'^\d{6}'))
+@dp.message_handler(filters.Regexp(r'^\d{6}$'))
 async def mail_delivery_period(message: types.Message):
     """
     При отправке 6 символов возвращает ответ Почты России по срокам доставки
@@ -23,7 +23,8 @@ async def url_shortener(message: types.Message):
     """
     При отправке ссылки возвращает сокращенную
     """
-    await message.answer(url_short(message.text), disable_web_page_preview=True)
+    await bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id, disable_web_page_preview=True)
+    await message.answer(url_short(message.text))
 
 
 @dp.message_handler(commands=['start', 'help'])
