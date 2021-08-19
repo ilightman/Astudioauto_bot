@@ -3,6 +3,7 @@ import os
 from src.func import delivery, url_short
 from aiogram import Bot, Dispatcher, executor, types, filters
 
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 # Initialize bot and dispatcher
@@ -11,11 +12,22 @@ dp = Dispatcher(bot)
 
 
 @dp.message_handler(filters.Regexp(r'^\d{6}$'))
-async def mail_delivery_period(message: types.Message):
+async def delivery_counter1(message: types.Message):
     """
-    If User message is 6 digit returns Russian post estimated delivery time
+    If User message is 6 digit return delivery
     """
-    await message.answer(delivery(message.text))
+    delivery_response = delivery(p_index=message.text)
+    await message.answer(delivery_response)
+
+
+@dp.message_handler(filters.Regexp(r'^\d{6}\s\d{4,}\s\d{4}$'))
+async def delivery_counter2(message: types.Message):
+    """
+        If User message is 6 digit + 4-5 digit + 4 digit return delivery and price
+    """
+    p_index, weight, price = message.text.split()
+    delivery_response = delivery(p_index=p_index, weight=weight, price=price)
+    await message.answer(delivery_response)
 
 
 @dp.message_handler(filters.Regexp(r'^(https?:\/\/)?([\w-]{1,32}\.[\w-]{1,32})[^\s@]*'))
