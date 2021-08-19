@@ -35,7 +35,7 @@ async def url_shortener(message: types.Message):
     """
     If User message is URL, returns shortened_url
     """
-    await message.answer(url_short(message.text))
+    await message.answer(url_short(message.text), disable_web_page_preview = True)
 
 
 @dp.message_handler(commands=['start', 'help'])
