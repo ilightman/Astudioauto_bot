@@ -17,7 +17,7 @@ def delivery(to_index: int, weight=None, price=None, from_index=125476) -> str:
         url_base += '/delivery?json&object=27040'
         params = f'&from={from_index}&to={to_index}&weight={weight}&pack=20'
 
-    date = f'&date={(datetime.now() + timedelta(days=2)).strftime("%Y%m%d")}'
+    date = f'&date={(datetime.now() + timedelta(days=2 if not price else 3)).strftime("%Y%m%d")}'
 
     http = urllib3.PoolManager()
     resp_http = http.urlopen('GET', url_base + params + date)
