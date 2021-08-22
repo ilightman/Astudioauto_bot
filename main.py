@@ -1,10 +1,11 @@
 import logging
-import os
-from src.func import delivery, url_short, mini_description
+from os import getenv
+
+from src.func import delivery, url_short, mini_description, address_recognition
 from aiogram import Bot, Dispatcher, executor, types, filters
 
 logging.basicConfig(level=logging.INFO)
-bot = Bot(token=os.getenv("ASTUDIO_BOT_TOKEN"), parse_mode=types.ParseMode.HTML)
+bot = Bot(token=getenv("ASTUDIO_BOT_TOKEN"), parse_mode=types.ParseMode.HTML)
 dp = Dispatcher(bot)
 
 
@@ -64,18 +65,31 @@ async def print_menu(message):
                    '\n' \
                    '📮 Почта России (в срок доставки уже добавлено 2 дня)\n' \
                    '├ <code>123456</code> - срок доставки по индексу \n' \
-                   '└ <code>индекс вес цена</code> - стоимость доставки Почты и сроки'
+                   '└ <code>индекс вес цена</code> - стоимость доставки Почты и сроки' \
+                   '\n' \
+                   '🗺️ Адрес:\n' \
+                   '├ <code>Москва Манежная площадь 1</code>\n' \
+                   '└ распознанный адрес, индекс и срок доставки Почтой России'
 
     await message.answer(message_text)
 
 
 @dp.message_handler()
+async def address_string_message(message: types.Message):
+    token = getenv('DADATA_TOKEN')
+    secret = getenv('DADATA_SECRET')
+    address = address_recognition(full_address_str=message.text, token=token, secret=secret)
+    text = f'{address}\n' \
+           f'{delivery(address[:6])}'
+    await message.answer(text)
+
+
+'''@dp.message_handler()
 async def echo(message: types.Message):
     """
     echo
     """
-    await message.answer(message.text)
-
+    await message.answer(message.text)'''
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)

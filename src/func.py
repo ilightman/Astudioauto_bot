@@ -2,6 +2,7 @@ import urllib3
 import json
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
+from dadata import Dadata
 
 
 def delivery(to_index: int, weight=None, price=None, from_index=125476) -> str:
@@ -60,3 +61,9 @@ def mini_description(url: str) -> str:
 
     except AttributeError:
         return 'Описание не найдено'
+
+
+def address_recognition(full_address_str: str, token: str, secret: str):  # other_token: str
+    dadata = Dadata(token, secret)
+    adr_resp = dadata.clean(name='address', source=full_address_str)
+    return f'{adr_resp["postal_code"]}, {adr_resp["result"]}'
