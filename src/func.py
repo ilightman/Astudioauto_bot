@@ -1,7 +1,10 @@
 import urllib3
+import requests
 import json
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
+from pyzbar.pyzbar import decode
+from PIL import Image
 from dadata import Dadata
 
 
@@ -67,3 +70,31 @@ def address_recognition(full_address_str: str, token: str, secret: str):  # othe
     dadata = Dadata(token, secret)
     adr_resp = dadata.clean(name='address', source=full_address_str)
     return f'{adr_resp["postal_code"]}, {adr_resp["result"]}'
+
+
+def barcode_response(file):
+    result = decode(Image.open(file))
+    for i in result:
+        data = i.data.decode("utf-8")
+        if data.startswith('[CDK]'):
+            return data[5:], 'СДЭК'
+        elif data.startswith('125476'):
+            return data, 'Почта России'
+
+
+def retail(track_number: str, delivery_type: str):
+    url = 'https://astudioauto.retailcrm.ru/api/v5/orders'
+    param = {'filter[trackNumber]': track_number, 'apiKey': 'bxc4npBsLqpf9OZIsOvvLR0CwWQleux5'}
+    r = requests.get(url, params=param)
+    order = r.json()
+    order = order['orders'][0]
+    # print(r.url)
+    # pprint(order)
+    li = f"<b>{delivery_type}</b>\n"
+    li += f"<b>Марка:</b> {order['customFields']['markaavto'].title()}\n"
+    li += f"<b>Модель:</b> {order['customFields']['modelavto']}\n"
+    li += f"<b>Год:</b> {order['customFields']['godavto']}\n\n <b>В заказе:</b>\n\n"
+    for i, item in enumerate(order['items'], 1):
+        li += f"{i}. {item['offer']['name']}\n\n"
+    li += f"<code>{order['managerComment']}</code>"
+    return li

@@ -1,7 +1,7 @@
 import logging
 from os import getenv
 
-from src.func import delivery, url_short, mini_description, address_recognition
+from src.func import delivery, url_short, mini_description, address_recognition, barcode_response, retail
 from aiogram import Bot, Dispatcher, executor, types, filters
 
 logging.basicConfig(level=logging.INFO)
@@ -49,6 +49,22 @@ async def url_shortener(message: types.Message):
     kb_inl.add(types.InlineKeyboardButton('Краткое описание', callback_data=f'url2'))
 
     await message.answer(message.text, disable_web_page_preview=True, reply_markup=kb_inl)
+
+
+@dp.message_handler(content_types=('photo'))
+async def photo_process(message: types.Message):
+    """
+        Если прислать фото проверяет есть ли на фото штрихкод,
+        если есть то присылает наименование товаров в данном заказе
+    """
+    #print(f'{message.photo=}')
+    fileID = message.photo[-1].file_id
+    #print(f'{fileID=}')
+    file_info = await bot.get_file(fileID)
+    #print(f'{file_info.file_path=}')
+    downloaded_file = await bot.download_file(file_info.file_path)
+    resp = barcode_response(downloaded_file)
+    await message.answer(retail(*resp) if resp else 'Не распознан штрихкод')
 
 
 @dp.message_handler(commands=['start', 'help'])
