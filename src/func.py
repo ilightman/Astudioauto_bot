@@ -1,10 +1,13 @@
+from os import path
 import urllib3
 import requests
 import json
+from pprint import pprint
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from pyzbar.pyzbar import decode
 from PIL import Image
+#from glob import glob
 from dadata import Dadata
 
 
@@ -89,12 +92,14 @@ def retail(track_number: str, delivery_type: str):
     order = r.json()
     order = order['orders'][0]
     # print(r.url)
-    # pprint(order)
+    pprint(order)
     li = f"<b>{delivery_type}</b>\n"
     li += f"<b>Марка:</b> {order['customFields']['markaavto'].title()}\n"
     li += f"<b>Модель:</b> {order['customFields']['modelavto']}\n"
     li += f"<b>Год:</b> {order['customFields']['godavto']}\n\n <b>В заказе:</b>\n\n"
     for i, item in enumerate(order['items'], 1):
-        li += f"{i}. {item['offer']['name']}\n\n"
+        li += f"{i}. {item['offer']['name']} - {item['prices'][0]['quantity']}шт.\n"
+        li += f"{item['prices'][0]['price']}\n\n"
+    li += f"<b>{order['summ']}\n</b>"
     li += f"<code>{order['managerComment']}</code>"
     return li
