@@ -68,5 +68,6 @@ def load():
             if not path: 
                 raise ImportError('Unable to find zbar shared library')
         libzbar = cdll.LoadLibrary(path)
-
+        dependencies = []
+    
     return libzbar, dependencies
