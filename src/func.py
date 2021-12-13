@@ -5,7 +5,7 @@ import json
 from pprint import pprint
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
-from pyzbar.pyzbar import decode
+from pyzbar import decode
 from PIL import Image
 #from glob import glob
 from dadata import Dadata
