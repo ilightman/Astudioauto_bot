@@ -3,6 +3,5 @@ aiogram>=2.11.2
 beautifulsoup4>=4.9.3
 dadata>=20.7.0
 requests~=2.26.0
-#pyzbar~=0.1.8
-https://files.pythonhosted.org/packages/3d/14/97bf8e36fb58965415e3c7d8f95cfd6375cb0b5464ae9dbc0a48f7f9ab19/pyzbar-0.1.8-py2.py3-none-win_amd64.whl
+pyzbar~=0.1.8
 Pillow~=8.4.0
