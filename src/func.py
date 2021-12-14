@@ -92,7 +92,7 @@ def retail(track_number: str, delivery_type: str):
     order = r.json()
     order = order['orders'][0]
     # print(r.url)
-    pprint(order)
+    # pprint(order)
     li = f"<b>{delivery_type}</b>\n"
     li += f"<b>Марка:</b> {order['customFields']['markaavto'].title()}\n"
     li += f"<b>Модель:</b> {order['customFields']['modelavto']}\n"
