@@ -5,7 +5,7 @@ from src.func import delivery, url_short, mini_description, address_recognition,
 from aiogram import Bot, Dispatcher, executor, types, filters
 
 logging.basicConfig(level=logging.INFO)
-bot = Bot(token=getenv("ASTUDIO_BOT_TOKEN"), parse_mode=types.ParseMode.HTML)
+bot = Bot(token=getenv("BOT_TOKEN"), parse_mode=types.ParseMode.HTML)
 dp = Dispatcher(bot)
 
 
