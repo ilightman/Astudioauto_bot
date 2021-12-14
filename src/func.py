@@ -1,13 +1,8 @@
-from os import path
-import urllib3
 import requests
-import json
-from pprint import pprint
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from pyzbar.pyzbar import decode
 from PIL import Image
-#from glob import glob
 from dadata import Dadata
 
 
@@ -15,20 +10,27 @@ def delivery(to_index: int, weight=None, price=None, from_index=125476) -> str:
     url_base = 'https://delivery.pochta.ru/v2/calculate'
     if weight and price:
         # расчет тарифа и контрольные сроки
-        url_base += '/tariff/delivery?json&object=4040'
+        url_base += '/tariff/'
         pack = 40 if int(weight) > 2000 else 20 if 1000 < int(weight) <= 2000 else 10  # s-10, m-20, l-30, xl-40
-        params = f'&from=125476&to={to_index}&weight={weight}&pack={pack}&sumoc={price}00'
+        params = {'object': '4040',
+                  'from': from_index,
+                  'to': from_index,
+                  'weight': weight,
+                  'pack': pack,
+                  'sumoc': f'{price}00'
+                  }
     else:
         # только сроки доставки
-        weight = 1000
-        url_base += '/delivery?json&object=27040'
-        params = f'&from={from_index}&to={to_index}&weight={weight}&pack=20'
+        params = {'object': '27040',
+                  'from': from_index,
+                  'to': to_index,
+                  'weight': '1000',
+                  'pack': '20'
+                  }
+    params['date'] = f'&date={(datetime.now() + timedelta(days=2 if not price else 3)).strftime("%Y%m%d")}'
 
-    date = f'&date={(datetime.now() + timedelta(days=2 if not price else 3)).strftime("%Y%m%d")}'
-
-    http = urllib3.PoolManager()
-    resp_http = http.urlopen('GET', url_base + params + date)
-    resp_json = json.loads(resp_http.data)
+    resp = requests.get(url_base + '/delivery?json', params=params)
+    resp_json = resp.json()
 
     try:
         delivery_days = resp_json["delivery"]["max"]
@@ -45,16 +47,13 @@ def delivery(to_index: int, weight=None, price=None, from_index=125476) -> str:
 
 
 def url_short(url: str) -> str:
-    url_long = 'https://clck.ru/--?url=' + url
-    http = urllib3.PoolManager()
-    url_sh = http.urlopen('GET', url_long).data
-    return url_sh.decode('UTF-8')
+    resp = requests.get('https://clck.ru/--?url=' + url)
+    return resp.text
 
 
 def mini_description(url: str) -> str:
-    http = urllib3.PoolManager()
-    url_sh = http.urlopen('GET', url).data
-    soup = BeautifulSoup(url_sh.decode('UTF-8'), 'html.parser')
+    resp = requests.get(url)
+    soup = BeautifulSoup(resp.content, 'html.parser')
     try:
         pict = ''.join(i for i in str(soup.find_all('img')[1]).split() if i.startswith('src='))[5:-1]
         pict_url = 'https://carautostudio.ru' + pict
@@ -83,16 +82,18 @@ def barcode_response(file):
             return data[5:], 'СДЭК'
         elif data.startswith('125476'):
             return data, 'Почта России'
+        else:
+            return False
 
 
-def retail(track_number: str, delivery_type: str):
+def retail(track_number: str, delivery_type: str) -> str:
     url = 'https://astudioauto.retailcrm.ru/api/v5/orders'
-    param = {'filter[trackNumber]': track_number, 'apiKey': 'bxc4npBsLqpf9OZIsOvvLR0CwWQleux5'}
+    param = {'filter[trackNumber]': track_number,
+             'apiKey': 'bxc4npBsLqpf9OZIsOvvLR0CwWQleux5'
+             }
     r = requests.get(url, params=param)
     order = r.json()
     order = order['orders'][0]
-    # print(r.url)
-    # pprint(order)
     li = f"<b>{delivery_type}</b>\n"
     li += f"<b>Марка:</b> {order['customFields']['markaavto'].title()}\n"
     li += f"<b>Модель:</b> {order['customFields']['modelavto']}\n"

@@ -51,17 +51,26 @@ async def url_shortener(message: types.Message):
     await message.answer(message.text, disable_web_page_preview=True, reply_markup=kb_inl)
 
 
+@dp.message_handler()
+async def address_string_message(message: types.Message):
+    '''token = getenv('DADATA_TOKEN')
+    secret = getenv('DADATA_SECRET')
+    address = address_recognition(full_address_str=message.text, token=token, secret=secret)
+    text = f'{address}\n' \
+           f'{delivery(address[:6])}'
+
+    await message.answer(text)
+    '''
+    await message.answer('Распознавание адресов пока не доступно...')
+
 @dp.message_handler(content_types=('photo'))
 async def photo_process(message: types.Message):
     """
         Если прислать фото проверяет есть ли на фото штрихкод,
         если есть то присылает наименование товаров в данном заказе
     """
-    #print(f'{message.photo=}')
     fileID = message.photo[-1].file_id
-    #print(f'{fileID=}')
     file_info = await bot.get_file(fileID)
-    #print(f'{file_info.file_path=}')
     downloaded_file = await bot.download_file(file_info.file_path)
     resp = barcode_response(downloaded_file)
     await message.answer(retail(*resp) if resp else 'Не распознан штрихкод')
@@ -79,25 +88,16 @@ async def print_menu(message):
                    '├ <code>https://carautostudio.ru/catalog/shtatnye_magnitoly/</code>\n' \
                    '└ пришлет сокращенную ссылку или краткое описание товара\n' \
                    '\n' \
-                   '📮 Почта России (в срок доставки уже добавлено 2 дня)\n' \
+                   '📮 Почта России\n' \
                    '├ <code>123456</code> - срок доставки по индексу \n' \
                    '└ <code>индекс вес цена</code> - стоимость доставки Почты и сроки' \
                    '\n' \
+                   '\n\n\n<b>ВРЕМЕННО НЕДОСТУПЕН</b>🗺\n' \
                    '🗺️ Адрес:\n' \
                    '├ <code>Москва Манежная площадь 1</code>\n' \
                    '└ распознанный адрес, индекс и срок доставки Почтой России'
 
     await message.answer(message_text)
-
-
-@dp.message_handler()
-async def address_string_message(message: types.Message):
-    token = getenv('DADATA_TOKEN')
-    secret = getenv('DADATA_SECRET')
-    address = address_recognition(full_address_str=message.text, token=token, secret=secret)
-    text = f'{address}\n' \
-           f'{delivery(address[:6])}'
-    await message.answer(text)
 
 
 '''@dp.message_handler()
