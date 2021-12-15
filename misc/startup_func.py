@@ -1,11 +1,14 @@
 import logging
 
 from aiogram import Dispatcher, types
+from datetime import datetime
 
 
 async def on_startup_notify(dp: Dispatcher):
     try:
-        await dp.bot.send_message(800546705, "Бот Запущен и готов к работе")
+        await dp.bot.send_message(800546705,
+                                  f'{datetime.now().strftime("%m.%d.%Y-%H:%M:%S")} '
+                                  f'Бот Запущен и готов к работе')
     except Exception as err:
         logging.exception(err)
 

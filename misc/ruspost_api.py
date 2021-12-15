@@ -9,21 +9,12 @@ def delivery(to_index: int, weight=None, price=None, from_index=125476) -> str:
         # расчет тарифа и контрольные сроки
         url_base += '/tariff/'
         pack = 40 if int(weight) > 2000 else 20 if 1000 < int(weight) <= 2000 else 10  # s-10, m-20, l-30, xl-40
-        params = {'object': '4040',
-                  'from': from_index,
-                  'to': to_index,
-                  'weight': weight,
-                  'pack': pack,
-                  'sumoc': f'{price}00'
-                  }
+        params = {'object': '4040', 'from': from_index, 'to': to_index, 'weight': weight, 'pack': pack,
+                  'sumoc': f'{price}00'}
     else:
         # только сроки доставки
-        params = {'object': '27040',
-                  'from': from_index,
-                  'to': to_index,
-                  'weight': '1000',
-                  'pack': '20'
-                  }
+        params = {'object': '27040', 'from': from_index, 'to': to_index, 'weight': '1000', 'pack': '20'}
+
     params['date'] = f'&date={(datetime.now() + timedelta(days=2 if not price else 3)).strftime("%Y%m%d")}'
 
     resp = requests.get(url_base + '/delivery?json', params=params)

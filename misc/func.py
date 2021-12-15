@@ -33,7 +33,7 @@ def address_recognition(full_address_str: str, token: str, secret: str):  # othe
     pass
 
 
-def barcode_response(file):
+def barcode_response(file) -> tuple:
     result = decode(Image.open(file))
     for i in result:
         data = i.data.decode("utf-8")
@@ -42,4 +42,4 @@ def barcode_response(file):
         elif data.startswith('125476'):
             return data, 'Почта России'
         else:
-            return data, 'Другое'
+            return data, 'Other'

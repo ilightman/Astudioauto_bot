@@ -1,11 +1,11 @@
 import logging
 from datetime import datetime
+from os import getenv
 
 from aiogram import types, filters
 
 from main import dp, bot
 from misc import delivery, url_short, mini_description, barcode_response, retail_delivery_info
-from os import getenv
 
 admins = getenv("ADMINS").split()
 
@@ -80,7 +80,14 @@ async def photo_process(message: types.Message):
     file_info = await bot.get_file(file_id)
     downloaded_file = await bot.download_file(file_info.file_path)
     resp = barcode_response(downloaded_file)
-    await message.answer(retail_delivery_info(*resp) if resp else 'Не распознан штрихкод')
+    if resp:
+        if resp[1] != 'Other':
+            await message.answer(retail_delivery_info(*resp))
+        else:
+            await message.answer(f"<code>{resp[0]}</code> - не является трек-номером СДЭК или Почты России")
+    else:
+        await message.answer('Штрихкод не распознан')
+
     logging.info(f'{datetime.now().strftime("%m.%d.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
