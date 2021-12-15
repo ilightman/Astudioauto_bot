@@ -14,7 +14,7 @@ def delivery(to_index: int, weight=None, price=None, from_index=125476) -> str:
         pack = 40 if int(weight) > 2000 else 20 if 1000 < int(weight) <= 2000 else 10  # s-10, m-20, l-30, xl-40
         params = {'object': '4040',
                   'from': from_index,
-                  'to': from_index,
+                  'to': to_index,
                   'weight': weight,
                   'pack': pack,
                   'sumoc': f'{price}00'
@@ -94,13 +94,13 @@ def retail(track_number: str, delivery_type: str) -> str:
     r = requests.get(url, params=param)
     order = r.json()
     order = order['orders'][0]
-    li = f"<b>{delivery_type}</b>\n"
-    li += f"<b>Марка:</b> {order['customFields']['markaavto'].title()}\n"
-    li += f"<b>Модель:</b> {order['customFields']['modelavto']}\n"
-    li += f"<b>Год:</b> {order['customFields']['godavto']}\n\n <b>В заказе:</b>\n\n"
+    li = f"<b>{delivery_type}</b>\n" \
+         f"<b>Марка:</b> {order['customFields']['markaavto'].title()}\n" \
+         f"<b>Модель:</b> {order['customFields']['modelavto']}\n" \
+         f"<b>Год:</b> {order['customFields']['godavto']}\n\n <b>В заказе:</b>\n\n"
     for i, item in enumerate(order['items'], 1):
-        li += f"{i}. {item['offer']['name']} - {item['prices'][0]['quantity']}шт.\n"
-        li += f"{item['prices'][0]['price']}\n\n"
-    li += f"<b>{order['summ']}\n</b>"
-    li += f"<code>{order['managerComment']}</code>"
+        li += f"{i}. {item['offer']['name']} - {item['prices'][0]['quantity']}шт.\n" \
+              f"{item['prices'][0]['price']}\n\n"
+    li += f"<b>{order['summ']}\n</b>" \
+          f"<code>{order['managerComment']}</code>"
     return li
