@@ -42,4 +42,4 @@ def barcode_response(file):
         elif data.startswith('125476'):
             return data, 'Почта России'
         else:
-            return False
+            return data, 'Другое'
