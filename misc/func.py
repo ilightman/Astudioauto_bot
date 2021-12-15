@@ -1,8 +1,7 @@
 import requests
 from PIL import Image
+from pyzbar.pyzbar import decode
 from bs4 import BeautifulSoup
-
-from .pyzbar import decode
 
 
 def url_short(url: str) -> str:

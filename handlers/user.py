@@ -40,3 +40,7 @@ async def echo(message: types.Message):
     echo
     """
     await message.answer(message.text)
+    logging.info(f'{datetime.now().strftime("%m.%d.%Y-%H:%M:%S")}'
+                 f'-USER-{message.from_user.id}'
+                 f'-{message.from_user.full_name}'
+                 f'-echo {message.text}')
