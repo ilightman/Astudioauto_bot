@@ -103,7 +103,7 @@ async def cdek_tracking(message: types.Message):
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
-                 f'-parcel tracking {message.text}')
+                 f'-cdek tracking - {message.text}')
 
 
 @dp.message_handler(filters.Regexp(r'(^\d{14}$)|(^[A-Z]{2}\d{9}[A-Z]{2}$)'))
@@ -113,7 +113,7 @@ async def pochta_tracking(message: types.Message):
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
-                 f'-parcel tracking {message.text}')
+                 f'-pochta tracking - {message.text}')
 
 
 @dp.message_handler(commands=['start', 'help'], user_id=admins)

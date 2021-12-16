@@ -1,10 +1,12 @@
+from os import getenv
+
 import requests
 
 
 def retail_delivery_info(track_number: str, delivery_type: str) -> str:
     url = 'https://astudioauto.retailcrm.ru/api/v5/orders'
     param = {'filter[trackNumber]': track_number,
-             'apiKey': 'bxc4npBsLqpf9OZIsOvvLR0CwWQleux5'}
+             'apiKey': getenv('RETAIL_APIKEY')}
     r = requests.get(url, params=param)
     order = r.json()
     order = order['orders'][0]
