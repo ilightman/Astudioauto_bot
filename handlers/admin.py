@@ -5,9 +5,11 @@ from os import getenv
 from aiogram import types, filters
 
 from main import dp, bot
-from misc import delivery, url_short, mini_description, barcode_response, retail_delivery_info
+from misc import pochta_delivery, url_short, mini_description, barcode_response, retail_delivery_info, \
+    pochta_parcel_tracking, cdek_parcel_tracking
 
 admins = getenv("ADMINS").split()
+admins.append(getenv("ADMIN"))
 
 
 @dp.callback_query_handler(filters.Text(startswith='url'), user_id=admins)
@@ -15,7 +17,7 @@ async def process_callback_button_url(callback_query: types.CallbackQuery):
     code = callback_query.data
     url = callback_query.message.text
     await callback_query.message.delete()
-    log_msg = f'{datetime.now().strftime("%m.%d.%Y-%H:%M:%S")}' \
+    log_msg = f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}' \
               f'-ADMIN-{callback_query.from_user.id}' \
               f'-{callback_query.from_user.full_name}'
     if code == 'url1':
@@ -27,14 +29,14 @@ async def process_callback_button_url(callback_query: types.CallbackQuery):
     logging.info(log_msg)
 
 
-@dp.message_handler(filters.Regexp(r'^\d{6}$'), user_id=admins)
+@dp.message_handler(filters.Regexp(r'(^\d{6}$)'), user_id=admins)
 async def delivery_only_index(message: types.Message):
     """
         If User message is 6 digit return delivery days
     """
-    delivery_response = delivery(to_index=message.text)
+    delivery_response = pochta_delivery(to_index=message.text)
     await message.answer(delivery_response)
-    logging.info(f'{datetime.now().strftime("%m.%d.%Y-%H:%M:%S")}'
+    logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
                  f'-delivery time')
@@ -46,9 +48,9 @@ async def delivery_index_price_weight(message: types.Message):
         If User message is 6 digit index, 3+ digit weight, 4+ digit price return delivery days and price
     """
     to_index, weight, price = message.text.split(message.text[6])
-    delivery_response = delivery(to_index=to_index, weight=weight, price=price)
+    delivery_response = pochta_delivery(to_index=to_index, weight=weight, price=price)
     await message.answer(delivery_response)
-    logging.info(f'{datetime.now().strftime("%m.%d.%Y-%H:%M:%S")}'
+    logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
                  f'-delivery time and price')
@@ -64,7 +66,7 @@ async def url_work(message: types.Message):
     kb_inl.add(types.InlineKeyboardButton('Краткое описание', callback_data=f'url2'))
 
     await message.answer(message.text, disable_web_page_preview=True, reply_markup=kb_inl)
-    logging.info(f'{datetime.now().strftime("%m.%d.%Y-%H:%M:%S")}'
+    logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
                  f'-url_work')
@@ -88,10 +90,30 @@ async def photo_process(message: types.Message):
     else:
         await message.answer('Штрихкод не распознан')
 
-    logging.info(f'{datetime.now().strftime("%m.%d.%Y-%H:%M:%S")}'
+    logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
-                 f'-barcode_response')
+                 f'-barcode_response - {resp[1] if resp else resp}')
+
+
+@dp.message_handler(filters.Regexp(r'(^\d{10}$)'))
+async def cdek_tracking(message: types.Message):
+    message_resp = cdek_parcel_tracking(message.text)
+    await message.answer(message_resp)
+    logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
+                 f'-ADMIN-{message.from_user.id}'
+                 f'-{message.from_user.full_name}'
+                 f'-parcel tracking {message.text}')
+
+
+@dp.message_handler(filters.Regexp(r'(^\d{14}$)|(^[A-Z]{2}\d{9}[A-Z]{2}$)'))
+async def pochta_tracking(message: types.Message):
+    message_resp = pochta_parcel_tracking(message.text)
+    await message.answer(message_resp)
+    logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
+                 f'-ADMIN-{message.from_user.id}'
+                 f'-{message.from_user.full_name}'
+                 f'-parcel tracking {message.text}')
 
 
 @dp.message_handler(commands=['start', 'help'], user_id=admins)
@@ -116,7 +138,7 @@ async def print_menu(message: types.Message):
                    '└ распознанный адрес, индекс и срок доставки Почтой России'
 
     await message.answer(message_text)
-    logging.info(f'{datetime.now().strftime("%m.%d.%Y-%H:%M:%S")}'
+    logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
                  f'-command {message.text}')
@@ -133,7 +155,7 @@ async def text_string(message: types.Message):
     # await message.answer(text)
     #
     await message.answer('Распознавание адресов пока не доступно...')
-    logging.info(f'{datetime.now().strftime("%m.%d.%Y-%H:%M:%S")}'
+    logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
                  f'-text_string recognition')

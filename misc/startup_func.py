@@ -1,12 +1,13 @@
 import logging
+from datetime import datetime
+from os import getenv
 
 from aiogram import Dispatcher, types
-from datetime import datetime
 
 
 async def on_startup_notify(dp: Dispatcher):
     try:
-        await dp.bot.send_message(800546705,
+        await dp.bot.send_message(getenv("ADMIN"),
                                   f'{datetime.now().strftime("%m.%d.%Y-%H:%M:%S")} '
                                   f'Бот Запущен и готов к работе')
     except Exception as err:

@@ -1,8 +1,8 @@
 import logging
-
 from os import getenv
 
 from aiogram import Bot, Dispatcher, executor, types
+
 from misc import on_startup
 
 logging.basicConfig(level=logging.INFO)
