@@ -23,5 +23,5 @@ async def set_default_commands(dp):
 
 async def on_startup(dp):
     from misc import on_startup_notify
-    # await on_startup_notify(dp)
+    await on_startup_notify(dp)
     await set_default_commands(dp)
