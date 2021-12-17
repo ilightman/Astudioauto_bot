@@ -9,7 +9,7 @@ from misc import pochta_delivery, url_short, mini_description, barcode_response,
     pochta_parcel_tracking, cdek_parcel_tracking
 
 admins = getenv("ADMINS").split()
-# admins.append(getenv("ADMIN"))
+admins.append(getenv("ADMIN"))
 
 
 @dp.callback_query_handler(filters.Text(startswith='url'), user_id=admins)
