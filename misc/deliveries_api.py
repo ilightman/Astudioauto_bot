@@ -6,7 +6,7 @@ from cdek.api import CDEKClient
 from pochta import tracking
 
 
-def pochta_delivery(to_index: int, weight=None, price=None, from_index=125476) -> str:
+async def pochta_delivery(to_index: int, weight=None, price=None, from_index=125476) -> str:
     url_base = 'https://delivery.pochta.ru/v2/calculate'
     if weight and price:
         # расчет тарифа и контрольные сроки
@@ -38,7 +38,7 @@ def pochta_delivery(to_index: int, weight=None, price=None, from_index=125476) -
         return resp_json['errors'][0]['msg']
 
 
-def pochta_parcel_tracking(track_number: str) -> str:
+async def pochta_parcel_tracking(track_number: str) -> str:
     pochta_login = getenv('POCHTA_LOGIN')
     pochta_password = getenv('POCHTA_PASSWORD')
     try:
@@ -54,7 +54,7 @@ def pochta_parcel_tracking(track_number: str) -> str:
         return 'По данному треку информация недоступна'
 
 
-def cdek_parcel_tracking(track_number: str) -> str:
+async def cdek_parcel_tracking(track_number: str) -> str:
     cdek_id = getenv('CDEK_ID')
     cdek_pass = getenv('CDEK_PASS')
     client = CDEKClient(cdek_id, cdek_pass)

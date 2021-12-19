@@ -3,7 +3,7 @@ from os import getenv
 import requests
 
 
-def retail_delivery_info(delivery_type: str, track_number: str) -> str:
+async def retail_delivery_info(delivery_type: str, track_number: str) -> str:
     url = 'https://astudioauto.retailcrm.ru/api/v5/orders'
     param = {'filter[trackNumber]': track_number,
              'apiKey': getenv('RETAIL_APIKEY')}
@@ -22,19 +22,23 @@ def retail_delivery_info(delivery_type: str, track_number: str) -> str:
     return li
 
 
-def retail_find_track_by_tel_number(phone_number: str) -> tuple:
+def retail_info_by_phone_number(phone_number: str) -> str:
     url = 'https://astudioauto.retailcrm.ru/api/v5/orders'
     param = {'filter[customer]': phone_number,
              'filter[extendedStatus][]': 'delivery-group',
              'apiKey': getenv('RETAIL_APIKEY')}
     r = requests.get(url, params=param)
     order = r.json()
+    msg = ''
     try:
         track_number = order['orders'][0]['delivery']['data']['trackNumber']
         delivery_code = order['orders'][0]['delivery']['integrationCode']
         delivery_code = 'Почта России' if delivery_code == 'russianpost' else 'СДЭК'
-        return delivery_code, track_number
+        msg = f"<b>Номер заказа:</b> {order['orders'][0]['number']}\n" \
+              f"<b>Служба доставки:</b> {delivery_code}\n" \
+              f"<b>Номер отслеживания:</b> {track_number}"
+        return msg
     except AttributeError:
-        return ()
+        return msg
     except IndexError:
-        return ()
+        return msg

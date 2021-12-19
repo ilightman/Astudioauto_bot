@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from pyzbar.pyzbar import decode
 
 
-def url_short(url: str) -> str:
+async def url_short(url: str) -> str:
     """Return shortened url by https://clck.ru/ service
 
     :param url: url that needs to be shortened
@@ -18,7 +18,7 @@ def url_short(url: str) -> str:
     return resp.text
 
 
-def mini_description(url: str) -> str:
+async def mini_description(url: str) -> str:
     resp = requests.get(url)
     soup = BeautifulSoup(resp.content, 'html.parser')
     try:
@@ -35,14 +35,14 @@ def mini_description(url: str) -> str:
         return 'Описание не найдено'
 
 
-def address_recognition(full_address_str: str, token: str, secret: str):  # other_token: str
+async def address_recognition(full_address_str: str, token: str, secret: str):  # other_token: str
     # dadata = Dadata(token, secret)
     # adr_resp = dadata.clean(name='address', source=full_address_str)
     # return f'{adr_resp["postal_code"]}, {adr_resp["result"]}'
     pass
 
 
-def barcode_response(file) -> dict:
+async def barcode_response(file) -> dict:
     result = decode(Image.open(file))
     data = {}
     for i in result:
@@ -56,7 +56,7 @@ def barcode_response(file) -> dict:
         return data
 
 
-def inline_kb_constructor(buttons: dict, row_width: int = 3) -> InlineKeyboardMarkup:
+async def inline_kb_constructor(buttons: dict, row_width: int = 3) -> InlineKeyboardMarkup:
     """Return inline keyboard made from button dict
 
     :param buttons: buttons dict {label:value} value could be a url
@@ -67,12 +67,12 @@ def inline_kb_constructor(buttons: dict, row_width: int = 3) -> InlineKeyboardMa
     :rtype: InlineKeyboardMarkup
     :return: generated inline keyboard
     """
-    kb_inl = InlineKeyboardMarkup(row_width)
+    kb_inl = InlineKeyboardMarkup(row_width=row_width)
+    button_list = []
     for label, value in buttons.items():
         if value.startswith('http'):
-            button = InlineKeyboardButton(label, url=value)
+            button_list.append(InlineKeyboardButton(label, url=value))
         else:
-            button = InlineKeyboardButton(label, callback_data=value)
-        kb_inl.add(button)
-
+            button_list.append(InlineKeyboardButton(label, callback_data=value))
+    kb_inl.add(*button_list)
     return kb_inl

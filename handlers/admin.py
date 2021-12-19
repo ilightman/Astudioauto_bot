@@ -18,9 +18,9 @@ async def process_callback_button_url(callback_query: types.CallbackQuery):
     url = callback_query.message.text
     await callback_query.message.delete()
     if code == 'url_short':
-        await bot.send_message(callback_query.message.chat.id, url_short(url), disable_web_page_preview=True)
+        await bot.send_message(callback_query.message.chat.id, await url_short(url), disable_web_page_preview=True)
     elif code == 'url_mini_desk':
-        await bot.send_message(callback_query.message.chat.id, mini_description(url))
+        await bot.send_message(callback_query.message.chat.id, await mini_description(url))
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{callback_query.from_user.id}'
                  f'-{callback_query.from_user.full_name}'
@@ -32,12 +32,12 @@ async def delivery_only_index(message: types.Message):
     """
         If User message is 6 digit return delivery days
     """
-    delivery_response = pochta_delivery(to_index=message.text)
+    delivery_response = await pochta_delivery(to_index=message.text)
     await message.answer(delivery_response)
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
-                 f'-delivery time')
+                 f'-delivery_time')
 
 
 @dp.message_handler(filters.Regexp(r'^\d{6}(\s|\S)\d{3,}(\s|\S)\d{4,}$'), user_id=admins)
@@ -46,12 +46,12 @@ async def delivery_index_price_weight(message: types.Message):
         If User message is 6 digit index, 3+ digit weight, 4+ digit price return delivery days and price
     """
     to_index, weight, price = message.text.split()
-    delivery_response = pochta_delivery(to_index=to_index, weight=weight, price=price)
+    delivery_response = await pochta_delivery(to_index=to_index, weight=weight, price=price)
     await message.answer(delivery_response)
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
-                 f'-delivery time and price')
+                 f'-delivery_time_and_price')
 
 
 @dp.message_handler(filters.Regexp(r'^(https?:\/\/)?([\w-]{1,32}\.[\w-]{1,32})[^\s@]*'), user_id=admins)
@@ -59,8 +59,8 @@ async def url_work(message: types.Message):
     """
         If message is URL, then choose url_short or product_description
     """
-    kb_inl = inline_kb_constructor({'Сократить ссылку': 'url_short',
-                                    'Краткое описание': 'url_mini_desc'})
+    kb_inl = await inline_kb_constructor({'Сократить ссылку': 'url_short',
+                                          'Краткое описание': 'url_mini_desc'})
 
     await message.answer(message.text, disable_web_page_preview=True, reply_markup=kb_inl)
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
@@ -78,10 +78,10 @@ async def photo_process(message: types.Message):
     file_id = message.photo[-1].file_id
     file_info = await bot.get_file(file_id)
     downloaded_file = await bot.download_file(file_info.file_path)
-    resp = barcode_response(downloaded_file)
+    resp = await barcode_response(downloaded_file)
     if resp:
         if resp['Name'] != 'Other':
-            await message.answer(retail_delivery_info(resp['Name'], resp['data']))
+            await message.answer(await retail_delivery_info(resp['Name'], resp['data']))
         else:
             await message.answer(f"<code>{resp['data']}</code> - не является трек-номером СДЭК или Почты России")
     else:
@@ -90,7 +90,7 @@ async def photo_process(message: types.Message):
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
-                 f'-barcode_response - {resp["data"] if resp else resp}')
+                 f'-barcode_response-{resp["data"] if resp else resp}')
 
 
 @dp.message_handler(commands=['start', 'help'], user_id=admins)
@@ -122,21 +122,4 @@ async def print_menu(message: types.Message):
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
-                 f'-command {message.text}')
-
-
-@dp.message_handler(user_id=admins)
-async def text_string(message: types.Message):
-    # token = getenv('DADATA_TOKEN')
-    # secret = getenv('DADATA_SECRET')
-    # address = address_recognition(full_address_str=message.text, token=token, secret=secret)
-    # text = f'{address}\n' \
-    #        f'{delivery(address[:6])}'
-    #
-    # await message.answer(text)
-    #
-    await message.answer('Распознавание адресов пока не доступно...')
-    logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
-                 f'-ADMIN-{message.from_user.id}'
-                 f'-{message.from_user.full_name}'
-                 f'-text_string recognition')
+                 f'-command-{message.text}')
