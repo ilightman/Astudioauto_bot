@@ -1,10 +1,19 @@
 import requests
 from PIL import Image
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from bs4 import BeautifulSoup
 from pyzbar.pyzbar import decode
 
 
 def url_short(url: str) -> str:
+    """Return shortened url by https://clck.ru/ service
+
+    :param url: url that needs to be shortened
+    :type url: str
+
+    :rtype: str
+    :return: shortened url
+    """
     resp = requests.get('https://clck.ru/--?url=' + url)
     return resp.text
 
@@ -18,9 +27,9 @@ def mini_description(url: str) -> str:
 
         mini_desc = soup.find(attrs={'class': 'item_info_section product-element-preview-text'})
         mini_desc = (i.replace('\xa0', '') for i in [i.text for i in mini_desc.find_all('li')])
-        mini_desk = '\n'.join(mini_desc)
+        mini_desc = '\n'.join(mini_desc)
 
-        return f'<a href="{pict_url}">{url_short(url)}</a>\n{mini_desk}'
+        return f'<a href="{pict_url}">{url_short(url)}</a>\n{mini_desc}'
 
     except AttributeError:
         return 'Описание не найдено'
@@ -33,13 +42,37 @@ def address_recognition(full_address_str: str, token: str, secret: str):  # othe
     pass
 
 
-def barcode_response(file) -> tuple:
+def barcode_response(file) -> dict:
     result = decode(Image.open(file))
+    data = {}
     for i in result:
-        data = i.data.decode("utf-8")
-        if data.startswith('[CDK]'):
-            return data[5:], 'СДЭК'
-        elif data.startswith('125476'):
-            return data, 'Почта России'
+        code_data = i.data.decode("utf-8")
+        if code_data.startswith('[CDK]'):
+            data['Name'], data['data'] = 'СДЭК', code_data[5:]
+        elif code_data.startswith('125476'):
+            data['Name'], data['data'] = 'Почта России', code_data
+        elif code_data:
+            data['Name'], data['data'] = 'Other', code_data
+        return data
+
+
+def inline_kb_constructor(buttons: dict, row_width: int = 3) -> InlineKeyboardMarkup:
+    """Return inline keyboard made from button dict
+
+    :param buttons: buttons dict {label:value} value could be a url
+    :type buttons: dict
+    :param row_width: width of button row
+    :type row_width: int
+
+    :rtype: InlineKeyboardMarkup
+    :return: generated inline keyboard
+    """
+    kb_inl = InlineKeyboardMarkup(row_width)
+    for label, value in buttons.items():
+        if value.startswith('http'):
+            button = InlineKeyboardButton(label, url=value)
         else:
-            return data, 'Other'
+            button = InlineKeyboardButton(label, callback_data=value)
+        kb_inl.add(button)
+
+    return kb_inl

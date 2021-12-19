@@ -6,7 +6,7 @@ from aiogram import types, filters
 
 from main import dp, bot
 from misc import pochta_delivery, url_short, mini_description, barcode_response, retail_delivery_info, \
-    pochta_parcel_tracking, cdek_parcel_tracking
+    inline_kb_constructor
 
 admins = getenv("ADMINS").split()
 admins.append(getenv("ADMIN"))
@@ -17,16 +17,14 @@ async def process_callback_button_url(callback_query: types.CallbackQuery):
     code = callback_query.data
     url = callback_query.message.text
     await callback_query.message.delete()
-    log_msg = f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}' \
-              f'-ADMIN-{callback_query.from_user.id}' \
-              f'-{callback_query.from_user.full_name}'
-    if code == 'url1':
+    if code == 'url_short':
         await bot.send_message(callback_query.message.chat.id, url_short(url), disable_web_page_preview=True)
-        log_msg += '-url_short'
-    elif code == 'url2':
+    elif code == 'url_mini_desk':
         await bot.send_message(callback_query.message.chat.id, mini_description(url))
-        log_msg += '-mini_description'
-    logging.info(log_msg)
+    logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
+                 f'-ADMIN-{callback_query.from_user.id}'
+                 f'-{callback_query.from_user.full_name}'
+                 f'-{"-url_short" if code == "url1" else "-mini_description"}')
 
 
 @dp.message_handler(filters.Regexp(r'(^\d{6}$)'), user_id=admins)
@@ -47,7 +45,7 @@ async def delivery_index_price_weight(message: types.Message):
     """
         If User message is 6 digit index, 3+ digit weight, 4+ digit price return delivery days and price
     """
-    to_index, weight, price = message.text.split(message.text[6])
+    to_index, weight, price = message.text.split()
     delivery_response = pochta_delivery(to_index=to_index, weight=weight, price=price)
     await message.answer(delivery_response)
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
@@ -59,11 +57,10 @@ async def delivery_index_price_weight(message: types.Message):
 @dp.message_handler(filters.Regexp(r'^(https?:\/\/)?([\w-]{1,32}\.[\w-]{1,32})[^\s@]*'), user_id=admins)
 async def url_work(message: types.Message):
     """
-        If User message is URL, then user choose url_short or product_description
+        If message is URL, then choose url_short or product_description
     """
-    kb_inl = types.InlineKeyboardMarkup(row_width=2)
-    kb_inl.add(types.InlineKeyboardButton('Сократить ссылку', callback_data=f'url1'))
-    kb_inl.add(types.InlineKeyboardButton('Краткое описание', callback_data=f'url2'))
+    kb_inl = inline_kb_constructor({'Сократить ссылку': 'url_short',
+                                    'Краткое описание': 'url_mini_desc'})
 
     await message.answer(message.text, disable_web_page_preview=True, reply_markup=kb_inl)
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
@@ -83,37 +80,17 @@ async def photo_process(message: types.Message):
     downloaded_file = await bot.download_file(file_info.file_path)
     resp = barcode_response(downloaded_file)
     if resp:
-        if resp[1] != 'Other':
-            await message.answer(retail_delivery_info(*resp))
+        if resp['Name'] != 'Other':
+            await message.answer(retail_delivery_info(resp['Name'], resp['data']))
         else:
-            await message.answer(f"<code>{resp[0]}</code> - не является трек-номером СДЭК или Почты России")
+            await message.answer(f"<code>{resp['data']}</code> - не является трек-номером СДЭК или Почты России")
     else:
-        await message.answer('Штрихкод не распознан')
+        await message.answer('Штрихкод не распознан или отсутствует на фото')
 
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
-                 f'-barcode_response - {resp[1] if resp else resp}')
-
-
-@dp.message_handler(filters.Regexp(r'(^\d{10}$)'))
-async def cdek_tracking(message: types.Message):
-    message_resp = cdek_parcel_tracking(message.text)
-    await message.answer(message_resp)
-    logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
-                 f'-ADMIN-{message.from_user.id}'
-                 f'-{message.from_user.full_name}'
-                 f'-cdek tracking - {message.text}')
-
-
-@dp.message_handler(filters.Regexp(r'(^\d{14}$)|(^[A-Z]{2}\d{9}[A-Z]{2}$)'))
-async def pochta_tracking(message: types.Message):
-    message_resp = pochta_parcel_tracking(message.text)
-    await message.answer(message_resp)
-    logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
-                 f'-ADMIN-{message.from_user.id}'
-                 f'-{message.from_user.full_name}'
-                 f'-pochta tracking - {message.text}')
+                 f'-barcode_response - {resp["data"] if resp else resp}')
 
 
 @dp.message_handler(commands=['start', 'help'], user_id=admins)
@@ -131,6 +108,10 @@ async def print_menu(message: types.Message):
                    '📮 Почта России\n' \
                    '├ <code>123456</code> - срок доставки по индексу \n' \
                    '└ <code>индекс вес цена</code> - стоимость доставки Почты и сроки' \
+                   '\n' \
+                   '📦 Отслеживание треков для посылок Почта россии и СДЭК:\n' \
+                   '├ <code>1234578901234</code> - для Почтовых отправления с 14 значными номерами (только цифры)\n' \
+                   '└ <code>RU123456789CH</code> - для EMS и Международных отправлений c 13 значными номерами\n' \
                    '\n' \
                    '\n\n\n<b>ВРЕМЕННО НЕДОСТУПЕН</b>🗺\n' \
                    '🗺️ Адрес:\n' \

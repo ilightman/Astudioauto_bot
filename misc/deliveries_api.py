@@ -12,12 +12,13 @@ def pochta_delivery(to_index: int, weight=None, price=None, from_index=125476) -
         # расчет тарифа и контрольные сроки
         url_base += '/tariff/'
         pack = 40 if int(weight) > 2000 else 20 if 1000 < int(weight) <= 2000 else 10  # s-10, m-20, l-30, xl-40
-        params = {'object': '4040', 'from': from_index, 'to': to_index, 'weight': weight, 'pack': pack,
+        params = {'object': '4040', 'weight': weight, 'pack': pack,
                   'sumoc': f'{price}00'}
     else:
         # только сроки доставки
-        params = {'object': '27040', 'from': from_index, 'to': to_index, 'weight': '1000', 'pack': '20'}
+        params = {'object': '27040', 'weight': '1000', 'pack': '20'}
 
+    params['from'], params['to'] = from_index, to_index
     params['date'] = f'&date={(datetime.now() + timedelta(days=2 if not price else 3)).strftime("%Y%m%d")}'
 
     resp = requests.get(url_base + '/delivery?json', params=params)
@@ -37,34 +38,35 @@ def pochta_delivery(to_index: int, weight=None, price=None, from_index=125476) -
         return resp_json['errors'][0]['msg']
 
 
-def pochta_parcel_tracking(track_number: str):
-    ret = ''
+def pochta_parcel_tracking(track_number: str) -> str:
     pochta_login = getenv('POCHTA_LOGIN')
     pochta_password = getenv('POCHTA_PASSWORD')
     try:
+        data = []
         resp = tracking.SingleTracker(pochta_login, pochta_password).get_history(track_number)
         for j in resp:
-            ret += f"{(j['OperationParameters']['OperDate']).strftime('%d.%m.%Y-%H:%M:%S')} - " \
-                   f"{j['OperationParameters']['OperType']['Name']}"
-            if j['OperationParameters']['OperAttr']['Name']:
-                ret += f" - {j['OperationParameters']['OperAttr']['Name']}\n"
-            else:
-                ret += '\n'
-        return ret
+            data.append(f"{(j['OperationParameters']['OperDate']).strftime('%d.%m.%Y-%H:%M:%S')} -"
+                        f"{j['OperationParameters']['OperType']['Name']}" +
+                        f" - {j['OperationParameters']['OperAttr']['Name']}"
+                        if j['OperationParameters']['OperAttr']['Name'] else '')
+        return '\n'.join(data if len(data) <= 14 else data[-10:])
     except TypeError:
         return 'По данному треку информация недоступна'
 
 
-def cdek_parcel_tracking(track_number: str):
-    ret = ''
+def cdek_parcel_tracking(track_number: str) -> str:
     cdek_id = getenv('CDEK_ID')
     cdek_pass = getenv('CDEK_PASS')
     client = CDEKClient(cdek_id, cdek_pass)
     order_info = client.get_orders_statuses([int(track_number)], show_history=1)[0]
     try:
+        data = []
         for i in order_info['Status']['State']:
-            date = datetime.fromisoformat(i['Date']).strftime('%d.%m.%Y-%H:%M:%S')
-            ret += f"{date} - {i['CityName']} - {i['Description']}\n"
-        return ret
+            if i['CityName'] == 'Управляющая Компания':
+                continue
+            else:
+                date = datetime.fromisoformat(i['Date']).strftime('%d.%m.%Y-%H:%M:%S')
+                data.append(f"{date} - {i['CityName']} - {i['Description']}")
+        return '\n'.join(data if len(data) <= 14 else data[-10:])
     except KeyError:
         return 'Не найден трек номер'
