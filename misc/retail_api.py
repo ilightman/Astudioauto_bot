@@ -3,7 +3,7 @@ from os import getenv
 import requests
 
 
-def retail_delivery_info(track_number: str, delivery_type: str) -> str:
+def retail_delivery_info(delivery_type: str, track_number: str) -> str:
     url = 'https://astudioauto.retailcrm.ru/api/v5/orders'
     param = {'filter[trackNumber]': track_number,
              'apiKey': getenv('RETAIL_APIKEY')}
@@ -20,3 +20,21 @@ def retail_delivery_info(track_number: str, delivery_type: str) -> str:
     li += f"Общая сумма заказа - <b>{order['summ']}</b> руб.\n" \
           f"<code>{order['managerComment']}</code>"
     return li
+
+
+def retail_find_track_by_tel_number(phone_number: str) -> tuple:
+    url = 'https://astudioauto.retailcrm.ru/api/v5/orders'
+    param = {'filter[customer]': phone_number,
+             'filter[extendedStatus][]': 'delivery-group',
+             'apiKey': getenv('RETAIL_APIKEY')}
+    r = requests.get(url, params=param)
+    order = r.json()
+    try:
+        track_number = order['orders'][0]['delivery']['data']['trackNumber']
+        delivery_code = order['orders'][0]['delivery']['integrationCode']
+        delivery_code = 'Почта России' if delivery_code == 'russianpost' else 'СДЭК'
+        return delivery_code, track_number
+    except AttributeError:
+        return ()
+    except IndexError:
+        return ()
