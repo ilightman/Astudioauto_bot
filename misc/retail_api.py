@@ -22,7 +22,7 @@ async def retail_delivery_info(delivery_type: str, track_number: str) -> str:
     return li
 
 
-def retail_info_by_phone_number(phone_number: str) -> str:
+async def retail_info_by_phone_number(phone_number: str) -> str:
     url = 'https://astudioauto.retailcrm.ru/api/v5/orders'
     param = {'filter[customer]': phone_number,
              'filter[extendedStatus][]': 'delivery-group',

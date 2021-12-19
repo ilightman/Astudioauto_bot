@@ -53,7 +53,7 @@ async def contact(message: types.Message):
         phone_num = message.contact.phone_number
     except AttributeError:
         phone_num = message.text
-    resp = retail_info_by_phone_number(phone_num)
+    resp = await retail_info_by_phone_number(phone_num)
     if resp:
         delivery_code, track_number, kb = resp.split()[-4], resp.split()[-1], {}
         if delivery_code == 'Почта России':
