@@ -21,7 +21,7 @@ async def process_callback_button_track(callback_query: types.CallbackQuery):
                  f'-{"ADMIN" if callback_query.message.from_user.id in admins else "User"}'
                  f'-{callback_query.from_user.id}'
                  f'-{callback_query.from_user.full_name}'
-                 f'-{"-pochta_tracking from cb" if code == "pochta" else "-cdek_tracking from cb"}')
+                 f'-{"pochta_tracking from cb" if code == "pochta" else "cdek_tracking from cb"}')
 
 
 @dp.message_handler(filters.Regexp(r'(^\d{14}$)|(^[A-Z]{2}\d{9}[A-Z]{2}$)'))
