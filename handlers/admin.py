@@ -19,12 +19,12 @@ async def process_callback_button_url(callback_query: types.CallbackQuery):
     await callback_query.message.delete()
     if code == 'url_short':
         await bot.send_message(callback_query.message.chat.id, await url_short(url), disable_web_page_preview=True)
-    elif code == 'url_mini_desk':
+    elif code == 'url_mini_desc':
         await bot.send_message(callback_query.message.chat.id, await mini_description(url))
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{callback_query.from_user.id}'
                  f'-{callback_query.from_user.full_name}'
-                 f'-{"-url_short" if code == "url1" else "-mini_description"}')
+                 f'-{"-url_short" if code == "url_short" else "-mini_description"}')
 
 
 @dp.message_handler(filters.Regexp(r'(^\d{6}$)'), user_id=admins)
