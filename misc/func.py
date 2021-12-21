@@ -29,7 +29,7 @@ async def mini_description(url: str) -> str:
         mini_desc = (i.replace('\xa0', '') for i in [i.text for i in mini_desc.find_all('li')])
         mini_desc = '\n'.join(mini_desc)
 
-        return f'<a href="{pict_url}">{url_short(url)}</a>\n{mini_desc}'
+        return f'<a href="{pict_url}">{await url_short(url)}</a>\n{mini_desc}'
 
     except AttributeError:
         return 'Описание не найдено'
