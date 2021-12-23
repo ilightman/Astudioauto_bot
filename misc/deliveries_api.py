@@ -1,9 +1,6 @@
 from datetime import datetime, timedelta
-from os import getenv
 
 import requests
-from cdek.api import CDEKClient
-from pochta import tracking
 
 
 async def pochta_delivery(to_index: int, weight=None, price=None, from_index=125476) -> str:
@@ -36,37 +33,3 @@ async def pochta_delivery(to_index: int, weight=None, price=None, from_index=125
 
     except KeyError:
         return resp_json['errors'][0]['msg']
-
-
-async def pochta_parcel_tracking(track_number: str) -> str:
-    pochta_login = getenv('POCHTA_LOGIN')
-    pochta_password = getenv('POCHTA_PASSWORD')
-    try:
-        data = []
-        resp = tracking.SingleTracker(pochta_login, pochta_password).get_history(track_number)
-        for j in resp:
-            data.append(f"{(j['OperationParameters']['OperDate']).strftime('%d.%m.%Y-%H:%M:%S')} -"
-                        f"{j['OperationParameters']['OperType']['Name']}" +
-                        f" - {j['OperationParameters']['OperAttr']['Name']}"
-                        if j['OperationParameters']['OperAttr']['Name'] else '')
-        return '\n'.join(data if len(data) <= 14 else data[-10:])
-    except TypeError:
-        return 'По данному треку информация недоступна'
-
-
-async def cdek_parcel_tracking(track_number: str) -> str:
-    cdek_id = getenv('CDEK_ID')
-    cdek_pass = getenv('CDEK_PASS')
-    client = CDEKClient(cdek_id, cdek_pass)
-    order_info = client.get_orders_statuses([int(track_number)], show_history=1)[0]
-    try:
-        data = []
-        for i in order_info['Status']['State']:
-            if i['CityName'] == 'Управляющая Компания':
-                continue
-            else:
-                date = datetime.fromisoformat(i['Date']).strftime('%d.%m.%Y-%H:%M:%S')
-                data.append(f"{date} - {i['CityName']} - {i['Description']}")
-        return '\n'.join(data if len(data) <= 14 else data[-10:])
-    except KeyError:
-        return 'Не найден трек номер'

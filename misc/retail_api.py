@@ -2,15 +2,17 @@ from os import getenv
 
 import requests
 
+from misc.classes import TrackNumber, RetailCrmOrder
 
-async def retail_delivery_info(delivery_type: str, track_number: str) -> str:
+
+async def retail_delivery_info(track: TrackNumber) -> str:
     url = 'https://astudioauto.retailcrm.ru/api/v5/orders'
-    param = {'filter[trackNumber]': track_number,
+    param = {'filter[trackNumber]': track.number,
              'apiKey': getenv('RETAIL_APIKEY')}
     r = requests.get(url, params=param)
     order = r.json()
     order = order['orders'][0]
-    li = f"<b>{delivery_type}</b>\n" \
+    li = f"<b>{track.type}</b>\n" \
          f"<b>Авто:</b> {order['customFields']['markaavto'].title()} " \
          f"{order['customFields']['modelavto']} {order['customFields']['godavto']}\n\n" \
          f"<b>В заказе:</b>\n\n"
@@ -22,23 +24,28 @@ async def retail_delivery_info(delivery_type: str, track_number: str) -> str:
     return li
 
 
-async def retail_info_by_phone_number(phone_number: str) -> str:
+async def retail_info_by_phone_number(phone_number: str) -> (str, TrackNumber):
     url = 'https://astudioauto.retailcrm.ru/api/v5/orders'
     param = {'filter[customer]': phone_number,
-             'filter[extendedStatus][]': 'delivery-group',
+             'filter[extendedStatus][]': ['delivery-group', 'complete'],
              'apiKey': getenv('RETAIL_APIKEY')}
     r = requests.get(url, params=param)
     order = r.json()
-    msg = ''
+    msg, track = '', None
     try:
-        track_number = order['orders'][0]['delivery']['data']['trackNumber']
-        delivery_code = order['orders'][0]['delivery']['integrationCode']
-        delivery_code = 'Почта России' if delivery_code == 'russianpost' else 'СДЭК'
-        msg = f"<b>Номер заказа:</b> {order['orders'][0]['number']}\n" \
-              f"<b>Служба доставки:</b> {delivery_code}\n" \
-              f"<b>Номер отслеживания:</b> {track_number}"
-        return msg
+        if not order['orders']:
+            raise IndexError
+        else:
+            order = RetailCrmOrder(order['orders'][0])
+            track = order.track_number
+            msg = f"<b>Номер заказа:</b> {order.number}\n" \
+                  f"<b>Статус заказа:</b> {order.status}\n" \
+                  f"<b>Служба доставки:</b> {track.type}\n" \
+                  f"<b>Номер отслеживания:</b> {track.number}"
     except AttributeError:
-        return msg
+        msg = '<b>Ошибка</b>, заказ с указанным номером телефона в системе отсутствует, проверьте правильность ввода'
     except IndexError:
-        return msg
+        msg = '<b>Ошибка</b>, Активные заказы с указанным номером телефона в системе отсутсвуют, ' \
+              'проверьте правильность ввода'
+    finally:
+        return msg, track

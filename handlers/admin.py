@@ -5,22 +5,21 @@ from os import getenv
 from aiogram import types, filters
 
 from main import dp, bot
-from misc import pochta_delivery, url_short, mini_description, barcode_response, retail_delivery_info, \
-    inline_kb_constructor
+from misc import pochta_delivery, barcode_response, retail_delivery_info, inline_kb_constructor, Url
 
 admins = getenv("ADMINS").split()
-admins.append(getenv("ADMIN"))
+admin = getenv("ADMIN")
 
 
 @dp.callback_query_handler(filters.Text(startswith='url'), user_id=admins)
 async def process_callback_button_url(callback_query: types.CallbackQuery):
     code = callback_query.data
-    url = callback_query.message.text
+    url = Url(callback_query.message.text)
     await callback_query.message.delete()
     if code == 'url_short':
-        await bot.send_message(callback_query.message.chat.id, await url_short(url), disable_web_page_preview=True)
+        await bot.send_message(callback_query.message.chat.id, url.shorten(), disable_web_page_preview=True)
     elif code == 'url_mini_desc':
-        await bot.send_message(callback_query.message.chat.id, await mini_description(url))
+        await bot.send_message(callback_query.message.chat.id, url.mini_description())
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{callback_query.from_user.id}'
                  f'-{callback_query.from_user.full_name}'
@@ -40,7 +39,7 @@ async def delivery_only_index(message: types.Message):
                  f'-delivery_time')
 
 
-@dp.message_handler(filters.Regexp(r'^\d{6}(\s|\S)\d{3,}(\s|\S)\d{4,}$'), user_id=admins)
+@dp.message_handler(filters.Regexp(r'^(\d{6})(\s{1,})(\d{3,})(\s{1,})(\d{4,})$'), user_id=admins)
 async def delivery_index_price_weight(message: types.Message):
     """
         If User message is 6 digit index, 3+ digit weight, 4+ digit price return delivery days and price
@@ -78,19 +77,20 @@ async def photo_process(message: types.Message):
     file_id = message.photo[-1].file_id
     file_info = await bot.get_file(file_id)
     downloaded_file = await bot.download_file(file_info.file_path)
-    resp = await barcode_response(downloaded_file)
-    if resp:
-        if resp['Name'] != 'Other':
-            await message.answer(await retail_delivery_info(resp['Name'], resp['data']))
+    track_number = await barcode_response(downloaded_file)
+    if track_number:
+        if track_number.type in ('Почта России', 'СДЭК'):
+            await message.answer(await retail_delivery_info(track_number))
         else:
-            await message.answer(f"<code>{resp['data']}</code> - не является трек-номером СДЭК или Почты России")
+            await message.answer(f"<code>{track_number.number}</code> - "
+                                 f"не является трек-номером СДЭК или Почты России")
     else:
         await message.answer('Штрихкод не распознан или отсутствует на фото')
 
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
-                 f'-barcode_response-{resp["data"] if resp else resp}')
+                 f'-barcode_response-{track_number.number if track_number else None}')
 
 
 @dp.message_handler(commands=['start', 'help'], user_id=admins)

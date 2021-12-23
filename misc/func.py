@@ -1,38 +1,8 @@
-import requests
 from PIL import Image
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from bs4 import BeautifulSoup
 from pyzbar.pyzbar import decode
 
-
-async def url_short(url: str) -> str:
-    """Return shortened url by https://clck.ru/ service
-
-    :param url: url that needs to be shortened
-    :type url: str
-
-    :rtype: str
-    :return: shortened url
-    """
-    resp = requests.get('https://clck.ru/--?url=' + url)
-    return resp.text
-
-
-async def mini_description(url: str) -> str:
-    resp = requests.get(url)
-    soup = BeautifulSoup(resp.content, 'html.parser')
-    try:
-        pict = ''.join(i for i in str(soup.find_all('img')[1]).split() if i.startswith('src='))[5:-1]
-        pict_url = 'https://carautostudio.ru' + pict
-
-        mini_desc = soup.find(attrs={'class': 'item_info_section product-element-preview-text'})
-        mini_desc = (i.replace('\xa0', '') for i in [i.text for i in mini_desc.find_all('li')])
-        mini_desc = '\n'.join(mini_desc)
-
-        return f'<a href="{pict_url}">{await url_short(url)}</a>\n{mini_desc}'
-
-    except AttributeError:
-        return 'Описание не найдено'
+from misc.classes import TrackNumber
 
 
 async def address_recognition(full_address_str: str, token: str, secret: str):  # other_token: str
@@ -42,18 +12,20 @@ async def address_recognition(full_address_str: str, token: str, secret: str):  
     pass
 
 
-async def barcode_response(file) -> dict:
+async def barcode_response(file) -> TrackNumber or None:
     result = decode(Image.open(file))
-    data = {}
     for i in result:
+        data = None
         code_data = i.data.decode("utf-8")
-        if code_data.startswith('[CDK]'):
-            data['Name'], data['data'] = 'СДЭК', code_data[5:]
+        if '[CDK]' in code_data:
+            data = TrackNumber(code_data[5:])
         elif code_data.startswith('125476'):
-            data['Name'], data['data'] = 'Почта России', code_data
+            data = TrackNumber(code_data)
         elif code_data:
-            data['Name'], data['data'] = 'Other', code_data
+            data = TrackNumber(code_data)
         return data
+    else:
+        return None
 
 
 async def inline_kb_constructor(buttons: dict, row_width: int = 3) -> InlineKeyboardMarkup:
