@@ -8,7 +8,7 @@ from main import dp, bot
 from misc import pochta_delivery, barcode_response, retail_delivery_info, inline_kb_constructor, Url
 
 admins = getenv("ADMINS").split()
-admin = getenv("ADMIN")
+admins.append(getenv("ADMIN"))
 
 
 @dp.callback_query_handler(filters.Text(startswith='url'), user_id=admins)
