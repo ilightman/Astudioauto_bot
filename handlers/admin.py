@@ -5,7 +5,7 @@ from os import getenv
 from aiogram import types, filters
 
 from main import dp, bot
-from misc import pochta_delivery, barcode_response, retail_delivery_info, inline_kb_constructor, Url
+from misc import pochta_delivery, barcode_response, inline_kb_constructor, Url
 
 admins = getenv("ADMINS").split()
 admins.append(getenv("ADMIN"))
@@ -17,9 +17,9 @@ async def process_callback_button_url(callback_query: types.CallbackQuery):
     url = Url(callback_query.message.text)
     await callback_query.message.delete()
     if code == 'url_short':
-        await bot.send_message(callback_query.message.chat.id, url.shorten(), disable_web_page_preview=True)
+        await bot.send_message(callback_query.message.chat.id, await url.shorten(), disable_web_page_preview=True)
     elif code == 'url_mini_desc':
-        await bot.send_message(callback_query.message.chat.id, url.mini_description())
+        await bot.send_message(callback_query.message.chat.id, await url.mini_description())
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{callback_query.from_user.id}'
                  f'-{callback_query.from_user.full_name}'
@@ -60,7 +60,6 @@ async def url_work(message: types.Message):
     """
     kb_inl = await inline_kb_constructor({'Сократить ссылку': 'url_short',
                                           'Краткое описание': 'url_mini_desc'})
-
     await message.answer(message.text, disable_web_page_preview=True, reply_markup=kb_inl)
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
@@ -68,29 +67,21 @@ async def url_work(message: types.Message):
                  f'-url_work')
 
 
-@dp.message_handler(content_types='photo', user_id=admins)
+@dp.message_handler(content_types=['photo', 'document'], user_id=admins)
 async def photo_process(message: types.Message):
     """
         Если прислать фото проверяет есть ли на фото штрихкод,
         если есть то присылает наименование товаров в данном заказе
     """
-    file_id = message.photo[-1].file_id
+    file_id = message.photo[-1].file_id if message.content_type == 'photo' else message.document.file_id
     file_info = await bot.get_file(file_id)
     downloaded_file = await bot.download_file(file_info.file_path)
-    track_number = await barcode_response(downloaded_file)
-    if track_number:
-        if track_number.type in ('Почта России', 'СДЭК'):
-            await message.answer(await retail_delivery_info(track_number))
-        else:
-            await message.answer(f"<code>{track_number.number}</code> - "
-                                 f"не является трек-номером СДЭК или Почты России")
-    else:
-        await message.answer('Штрихкод не распознан или отсутствует на фото')
-
+    msg = await barcode_response(downloaded_file)
+    await message.answer(msg)
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-ADMIN-{message.from_user.id}'
                  f'-{message.from_user.full_name}'
-                 f'-barcode_response-{track_number.number if track_number else None}')
+                 f'-barcode_response')
 
 
 @dp.message_handler(commands=['start', 'help'], user_id=admins)
@@ -110,7 +101,7 @@ async def print_menu(message: types.Message):
                    '└ <code>индекс вес цена</code> - стоимость доставки Почты и сроки' \
                    '\n' \
                    '📦 Отслеживание треков для посылок Почта россии и СДЭК:\n' \
-                   '├ <code>1234578901234</code> - для Почтовых отправления с 14 значными номерами (только цифры)\n' \
+                   '├ <code>12345678901234</code> - для Почтовых отправления с 14 значными номерами (только цифры)\n' \
                    '└ <code>RU123456789CH</code> - для EMS и Международных отправлений c 13 значными номерами\n' \
                    '\n' \
                    '\n\n\n<b>ВРЕМЕННО НЕДОСТУПЕН</b>🗺\n' \

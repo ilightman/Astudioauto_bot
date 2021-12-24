@@ -45,7 +45,7 @@ async def retail_info_by_phone_number(phone_number: str) -> (str, TrackNumber):
     except AttributeError:
         msg = '<b>Ошибка</b>, заказ с указанным номером телефона в системе отсутствует, проверьте правильность ввода'
     except IndexError:
-        msg = '<b>Ошибка</b>, Активные заказы с указанным номером телефона в системе отсутсвуют, ' \
+        msg = '<b>Ошибка</b>, Активные заказы с указанным номером телефона в системе отсутствуют, ' \
               'проверьте правильность ввода'
     finally:
         return msg, track

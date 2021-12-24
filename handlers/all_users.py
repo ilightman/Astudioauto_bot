@@ -11,7 +11,7 @@ from misc import inline_kb_constructor, retail_info_by_phone_number, TrackNumber
 @dp.callback_query_handler(filters.Text(startswith='tracking'))
 async def process_callback_button_tracking(callback_query: types.CallbackQuery):
     track = TrackNumber(callback_query.message.text.split()[-1])
-    await bot.send_message(callback_query.message.chat.id, track.track_down(), reply_markup=None)
+    await bot.send_message(callback_query.message.chat.id, await track.track_down(), reply_markup=None)
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-{"ADMIN" if callback_query.message.from_user.id in admins else "User"}'
                  f'-{callback_query.from_user.id}'
@@ -22,7 +22,7 @@ async def process_callback_button_tracking(callback_query: types.CallbackQuery):
 @dp.message_handler(filters.Regexp(r'(^\d{14}$)|(^[A-Z]{2}\d{9}[A-Z]{2}$)|(^[^9]\d{9}$)'))
 async def tracking(message: types.Message):
     track = TrackNumber(message.text)
-    await message.answer(track.track_down())
+    await message.answer(await track.track_down())
     logging.info(f'{datetime.now().strftime("%d.%m.%Y-%H:%M:%S")}'
                  f'-{"ADMIN" if message.from_user.id in admins else "User"}'
                  f'-{message.from_user.id}'

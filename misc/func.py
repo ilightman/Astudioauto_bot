@@ -3,29 +3,26 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyzbar.pyzbar import decode
 
 from misc.classes import TrackNumber
+from misc.retail_api import retail_delivery_info
 
 
-async def address_recognition(full_address_str: str, token: str, secret: str):  # other_token: str
-    # dadata = Dadata(token, secret)
-    # adr_resp = dadata.clean(name='address', source=full_address_str)
-    # return f'{adr_resp["postal_code"]}, {adr_resp["result"]}'
-    pass
-
-
-async def barcode_response(file) -> TrackNumber or None:
+async def barcode_response(file) -> str:
     result = decode(Image.open(file))
+    track, c_data = None, None
     for i in result:
-        data = None
-        code_data = i.data.decode("utf-8")
-        if '[CDK]' in code_data:
-            data = TrackNumber(code_data[5:])
-        elif code_data.startswith('125476'):
-            data = TrackNumber(code_data)
-        elif code_data:
-            data = TrackNumber(code_data)
-        return data
+        c_data = i.data.decode("utf-8")
+        if 'CDK' in c_data:
+            track = TrackNumber(c_data[5:])
+        elif c_data.startswith('125476'):
+            track = TrackNumber(c_data)
+    if track:
+        msg = f'{track.number} - {track.type}\n' \
+              f'{await retail_delivery_info(track)}'
+    elif c_data and not track:
+        msg = f"<code>{c_data}</code> - Не является трек номером Почты России или СДЭК"
     else:
-        return None
+        msg = 'Штрихкод не распознан или отсутствует на фото'
+    return msg
 
 
 async def inline_kb_constructor(buttons: dict, row_width: int = 3) -> InlineKeyboardMarkup:

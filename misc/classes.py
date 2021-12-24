@@ -13,7 +13,7 @@ class Url:
     def __init__(self, url):
         self.url = url
 
-    def shorten(self) -> str:
+    async def shorten(self) -> str:
         """Return shortened url by https://clck.ru/ service
 
         :rtype: str
@@ -22,7 +22,7 @@ class Url:
         resp = requests.get('https://clck.ru/--?url=' + self.url)
         return resp.text
 
-    def mini_description(self) -> str:
+    async def mini_description(self) -> str:
         if 'astudioauto.ru' in self.url or 'carautostudio.ru' in self.url:
             resp = requests.get(self.url)
             soup = BeautifulSoup(resp.content, 'html.parser')
@@ -32,9 +32,7 @@ class Url:
                 mini_desc = soup.find(attrs={'class': 'item_info_section product-element-preview-text'})
                 mini_desc = (i.replace('\xa0', '') for i in [i.text for i in mini_desc.find_all('li')])
                 mini_desc = '\n'.join(mini_desc)
-
-                return f'<a href="{pict_url}">{self.shorten()}</a>\n{mini_desc}'
-
+                return f'<a href="{pict_url}">{await self.shorten()}</a>\n{mini_desc}'
             except AttributeError:
                 return 'Описание не найдено'
         else:
@@ -43,8 +41,8 @@ class Url:
 
 class TrackNumber:
 
-    def __init__(self, track_number: str):
-        self.number = track_number
+    def __init__(self, track: str):
+        self.number = track
 
     @property
     def type(self):
@@ -55,7 +53,7 @@ class TrackNumber:
         else:
             return 'Other'
 
-    def track_down(self):
+    async def track_down(self):
         if self.type == 'Почта России':
             pochta_login = getenv('POCHTA_LOGIN')
             pochta_password = getenv('POCHTA_PASSWORD')
