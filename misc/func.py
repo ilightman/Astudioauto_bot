@@ -6,7 +6,7 @@ from misc.classes import TrackNumber
 from misc.retail_api import retail_delivery_info
 
 
-async def barcode_response(file) -> str:
+async def qr_response(file) -> str:
     result = decode(Image.open(file))
     track, c_data = None, None
     for i in result:

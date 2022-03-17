@@ -1,10 +1,11 @@
+import io
 import logging
 from os import getenv
 
 from aiogram import types, filters
 
-from main import dp, bot
-from misc import pochta_delivery, barcode_response, inline_kb_constructor, Url
+from main import dp
+from misc import pochta_delivery, inline_kb_constructor, Url, qr_response
 
 admins = getenv("ADMINS").split()
 admins.append(getenv("ADMIN"))
@@ -62,10 +63,12 @@ async def barcode_response(message: types.Message):
         Если прислать фото проверяет есть ли на фото штрихкод,
         если есть то присылает наименование товаров в данном заказе
     """
-    file_id = message.photo[-1].file_id if message.content_type == 'photo' else message.document.file_id
-    file_info = await bot.get_file(file_id)
-    downloaded_file = await bot.download_file(file_info.file_path)
-    msg = await barcode_response(downloaded_file)
+    file_in_io = io.BytesIO()
+    if message.content_type == 'photo':
+        await message.photo[-1].download(destination_file=file_in_io)
+    elif message.content_type == 'document':
+        await message.document.download(destination_file=file_in_io)
+    msg = await qr_response(file_in_io)
     await message.answer(msg)
     logging.info(f':ADMIN{message.from_user.id}:{message.from_user.full_name}')
 

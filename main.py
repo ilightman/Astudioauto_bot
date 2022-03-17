@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, executor, types
 
 from misc import on_startup, on_shutdown
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(format='%(asctime)s:%(funcName)s:%(message)s', level=logging.INFO)
 bot = Bot(token=getenv("BOT_TOKEN"), parse_mode=types.ParseMode.HTML)
 dp = Dispatcher(bot)
 
