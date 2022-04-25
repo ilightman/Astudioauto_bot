@@ -45,3 +45,6 @@ async def inline_kb_constructor(buttons: dict, row_width: int = 3) -> InlineKeyb
             button_list.append(InlineKeyboardButton(label, callback_data=value))
     kb_inl.add(*button_list)
     return kb_inl
+
+def custom_time(*args):
+        return datetime.now(tz=ZoneInfo("Europe/Moscow")).timetuple()
