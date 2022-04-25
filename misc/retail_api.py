@@ -20,7 +20,7 @@ async def retail_delivery_info(track: TrackNumber) -> str:
         li += f"{i}. {item['offer']['name']} - {item['prices'][0]['quantity']}шт.  " \
               f"{item['prices'][0]['price']} руб.\n\n"
     li += f"Общая сумма заказа - <b>{order['summ']}</b> руб.\n" \
-          f"<code>{order['managerComment']}</code>"
+          f"<code>{order.get('managerComment')}</code>"
     return li
 
 
