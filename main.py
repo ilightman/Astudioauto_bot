@@ -3,6 +3,8 @@ from os import getenv
 
 from aiogram import Bot, Dispatcher, executor, types
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from misc import on_startup, on_shutdown
 
 
