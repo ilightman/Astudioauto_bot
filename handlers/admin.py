@@ -22,7 +22,7 @@ async def process_callback_button_url(callback_query: types.CallbackQuery):
                                             disable_web_page_preview=True)
     elif code == 'url_mini_desc':
         await callback_query.message.answer(await url.mini_description())
-    logging.info(f'{code}:ADMIN{callback_query.message.from_user.id}:{callback_query.message.from_user.full_name}')
+    logging.info(f'{code}:ADMIN:{callback_query.message.from_user.id}:{callback_query.message.from_user.full_name}')
 
 
 @dp.message_handler(regexp=r'(^\d{6}$)', user_id=admins)
@@ -32,7 +32,7 @@ async def delivery_time_by_index(message: types.Message):
     """
     delivery_response = await pochta_delivery(to_index=message.text)
     await message.answer(delivery_response)
-    logging.info(f':ADMIN{message.from_user.id}:{message.from_user.full_name}')
+    logging.info(f':ADMIN:{message.from_user.id}:{message.from_user.full_name}')
 
 
 @dp.message_handler(regexp=r'^(\d{6})(\s{1,})(\d{3,})(\s{1,})(\d{4,})$', user_id=admins)
@@ -43,7 +43,7 @@ async def delivery_index_price_weight(message: types.Message):
     to_index, weight, price = message.text.split()
     delivery_response = await pochta_delivery(to_index=to_index, weight=weight, price=price)
     await message.answer(delivery_response)
-    logging.info(f':ADMIN{message.from_user.id}:{message.from_user.full_name}')
+    logging.info(f':ADMIN:{message.from_user.id}:{message.from_user.full_name}')
 
 
 @dp.message_handler(regexp=r'^(https?:\/\/)?([\w-]{1,32}\.[\w-]{1,32})[^\s@]*', user_id=admins)
@@ -54,7 +54,7 @@ async def url_shortener(message: types.Message):
     kb_inl = await inline_kb_constructor({'Сократить ссылку': 'url_short',
                                           'Краткое описание': 'url_mini_desc'})
     await message.answer(message.text, disable_web_page_preview=True, reply_markup=kb_inl)
-    logging.info(f':ADMIN{message.from_user.id}:{message.from_user.full_name}')
+    logging.info(f':ADMIN:{message.from_user.id}:{message.from_user.full_name}')
 
 
 @dp.message_handler(content_types=['photo', 'document'], user_id=admins)
@@ -70,7 +70,7 @@ async def barcode_response(message: types.Message):
         await message.document.download(destination_file=file_in_io)
     msg = await qr_response(file_in_io)
     await message.answer(msg)
-    logging.info(f':ADMIN{message.from_user.id}:{message.from_user.full_name}')
+    logging.info(f':ADMIN:{message.from_user.id}:{message.from_user.full_name}')
 
 
 @dp.message_handler(commands=['start', 'help'], user_id=admins)
@@ -94,4 +94,4 @@ async def start_help(message: types.Message):
                    '└ <code>RU123456789CH</code> - для EMS и Международных отправлений c 13 значными номерами\n'
 
     await message.answer(message_text)
-    logging.info(f':ADMIN{message.from_user.id}:{message.from_user.full_name}')
+    logging.info(f':ADMIN:{message.from_user.id}:{message.from_user.full_name}')
