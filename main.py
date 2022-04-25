@@ -2,9 +2,13 @@ import logging
 from os import getenv
 
 from aiogram import Bot, Dispatcher, executor, types
-
+from datetime import datetime
 from misc import on_startup, on_shutdown
-from misc.func import custom_time
+
+
+def custom_time(*args):
+        return datetime.now(tz=ZoneInfo("Europe/Moscow")).timetuple()
+
 
 logging.basicConfig(format='%(asctime)s:%(funcName)s:%(message)s', level=logging.INFO)
 logging.Formatter.converter = custom_time
