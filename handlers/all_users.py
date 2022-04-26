@@ -52,8 +52,6 @@ async def start_help(message: types.Message):
 
 @dp.message_handler()
 async def echo(message: types.Message):
-    """
-    echo
-    """
-    await message.answer('Сработала функция Эхо: ' + message.text)
-    logging.info(f'echo:{message.from_user.id}:{message.from_user.full_name}')
+    """echo"""
+    await message.answer(str(message))
+    logging.info(f'{message.from_user.id}:{message.from_user.full_name}')

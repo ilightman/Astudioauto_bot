@@ -1,17 +1,15 @@
 import io
-import logging
 import os
-from datetime import datetime
 from zipfile import ZipFile
-from zoneinfo import ZoneInfo
 
 import requests
 import yadisk_async
-from aiogram import Dispatcher
 from imap_tools import MailBox
 
+from misc.admin_services import _log_and_notify_admin
 
-async def _carav_price_url(dp: Dispatcher):
+
+async def _carav_price_url():
     c_name, c_url = '', ''
     try:
         with MailBox('imap.yandex.ru').login(username=os.getenv("YANDEX_USERNAME"),
@@ -27,23 +25,16 @@ async def _carav_price_url(dp: Dispatcher):
             c_name = response_data.json().get('name')
             c_url = response_data.json().get('file')
             c_name = name + ' ' + c_name
-            logging.info('successfully retrieving name and url from mail')
-            await dp.bot.send_message(os.getenv("ADMIN"),
-                                      f'{datetime.now(tz=ZoneInfo("Europe/Moscow")).strftime("%d.%m.%Y-%H:%M:%S")}'
-                                      ' - successfully retrieving name and url from mail')
+            await _log_and_notify_admin('successfully retrieving name and url from mail')
+
             return c_name, c_url
     except Exception as e:
-        logging.error("Couldn't retrieve name and url from mail", e)
-        await dp.bot.send_message(os.getenv("ADMIN"),
-                                  f'{datetime.now(tz=ZoneInfo("Europe/Moscow")).strftime("%d.%m.%Y-%H:%M:%S")}'
-                                  ' - successfully retrieving name and url from mail')
+        await _log_and_notify_admin(f"Couldn't retrieve name and url from mail: {e}", exception=True)
         return c_name, c_url
 
 
-async def _download_to_io_upload_yadisk(dp: Dispatcher):
-    logging.info('скачиваю прайс-листы')
-    await dp.bot.send_message(os.getenv("ADMIN"),
-                              str(datetime.now(tz=ZoneInfo("Europe/Moscow"))) + ' Начинаю скачивание прайс листов')
+async def _download_to_io_upload_yadisk():
+    await _log_and_notify_admin('Скачиваю прайс-листы')
     suppliers_dict = {
         'farcar.xlsx':
             'https://www.dropbox.com/s/3l04xay6nd5omyf/Прайс FarCar.xlsx?dl=1',
@@ -52,7 +43,7 @@ async def _download_to_io_upload_yadisk(dp: Dispatcher):
         'carmedia.zip':
             'https://www.dropbox.com/sh/l2ifpaeheeexht2/AADPnUESLFHScNp2LiVjsqVwa?dl=1'
     }
-    name, url = await _carav_price_url(dp)
+    name, url = await _carav_price_url()
     if name:
         suppliers_dict[name] = url
     y = yadisk_async.YaDisk(token=os.getenv("YADISK_TOKEN"))
@@ -61,16 +52,12 @@ async def _download_to_io_upload_yadisk(dp: Dispatcher):
     try:
         async for i in await y.listdir(yadisk_folder):
             await y.remove(yadisk_folder + i.name)
-        logging.info('yadisk folder cleared')
-        await dp.bot.send_message(os.getenv("ADMIN"), ' - yadisk folder cleared')
+        await _log_and_notify_admin('yadisk folder cleared')
     except Exception as e:
-        logging.error('yadisk error: ', e)
-        await dp.bot.send_message(os.getenv("ADMIN"), ' - yadisk error: {e}')
-
+        await _log_and_notify_admin(f'yadisk error: {e}', exception=True)
     for name, url in suppliers_dict.items():
         try:
-            logging.info(f'{name} item downloading')
-            await dp.bot.send_message(os.getenv("ADMIN"), f' - {name} item downloading')
+            await _log_and_notify_admin(f'{name} item downloading')
             resp = requests.get(url)
             resp_file_in_io = io.BytesIO()
             resp_file_in_io.write(resp.content)
@@ -84,14 +71,10 @@ async def _download_to_io_upload_yadisk(dp: Dispatcher):
                         if item.endswith('.xlsx') and 'конфликтующая' not in item.lower():
                             with zip_file.open(item, 'r') as file_from_zip_in_io:
                                 await y.upload(file_from_zip_in_io, f'{yadisk_folder}{name[:-4]}.xlsx')
-            logging.info(name + ' downloaded')
-            await dp.bot.send_message(os.getenv("ADMIN"), f' - {name} downloaded')
+            await _log_and_notify_admin(name + ' скачан и загружен на Я.диск')
         except Exception as e:
-            logging.error(f"error: {name} wasn't downloaded: {e}")
-            await dp.bot.send_message(os.getenv("ADMIN"), f" - error: {name} wasn't downloaded: {e}")
+            await _log_and_notify_admin(f"error: {name} wasn't downloaded: {e}", exception=True)
             continue
         finally:
             await y.close()
-    await dp.bot.send_message(os.getenv("ADMIN"),
-                              f'{datetime.now(tz=ZoneInfo("Europe/Moscow")).strftime("%d.%m.%Y-%H:%M:%S")}'
-                              'Все файлы скачаны и загружены на Яндекс диск')
+    await _log_and_notify_admin('Все файлы скачаны и загружены на Яндекс диск')

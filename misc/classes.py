@@ -7,12 +7,15 @@ from bs4 import BeautifulSoup
 from cdek.api import CDEKClient
 from pochta import tracking
 
+from misc.admin_services import _log_and_notify_admin
+
 
 class Url:
 
     def __init__(self, url):
         self.url = url
 
+    @property
     async def shorten(self) -> str:
         """Return shortened url by https://clck.ru/ service
 
@@ -23,20 +26,23 @@ class Url:
         return resp.text
 
     async def mini_description(self) -> str:
-        if 'astudioauto.ru' in self.url or 'carautostudio.ru' in self.url:
-            resp = requests.get(self.url)
-            soup = BeautifulSoup(resp.content, 'html.parser')
-            try:
-                pict = ''.join(i for i in str(soup.find_all('img')[1]).split() if i.startswith('src='))[5:-1]
-                pict_url = 'https://carautostudio.ru' + pict
-                mini_desc = soup.find(attrs={'class': 'item_info_section product-element-preview-text'})
-                mini_desc = (i.replace('\xa0', '') for i in [i.text for i in mini_desc.find_all('li')])
-                mini_desc = '\n'.join(mini_desc)
-                return f'<a href="{pict_url}">{await self.shorten()}</a>\n{mini_desc}'
-            except AttributeError:
-                return 'Описание не найдено'
-        else:
-            return 'Не является ссылкой одного из магазинов'
+        try:
+            if 'astudioauto.ru' in self.url or 'carautostudio.ru' in self.url:
+                resp = requests.get(self.url)
+                soup = BeautifulSoup(resp.content, 'html.parser')
+                try:
+                    pict = ''.join(i for i in str(soup.find_all('img')[1]).split() if i.startswith('src='))[5:-1]
+                    pict_url = 'https://carautostudio.ru' + pict
+                    mini_desc = soup.find(attrs={'class': 'item_info_section product-element-preview-text'})
+                    mini_desc = (i.replace('\xa0', '') for i in [i.text for i in mini_desc.find_all('li')])
+                    mini_desc = '\n'.join(mini_desc)
+                    return f'<a href="{pict_url}">{await self.shorten()}</a>\n{mini_desc}'
+                except AttributeError:
+                    return 'Описание не найдено'
+            else:
+                return 'Не является ссылкой одного из магазинов'
+        except Exception as e:
+            await _log_and_notify_admin(f'mini_description error {e}')
 
 
 class TrackNumber:

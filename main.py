@@ -18,6 +18,9 @@ logging.basicConfig(format='%(asctime)s:%(funcName)s:%(message)s', level=logging
                     datefmt="%Y-%m-%d %H:%M:%S")
 logging.Formatter.converter = custom_time
 
+admins = getenv("ADMINS").split() if getenv("ADMINS") else ''
+# admins.append(getenv("ADMIN"))
+
 bot = Bot(token=getenv("BOT_TOKEN"), parse_mode=types.ParseMode.HTML)
 dp = Dispatcher(bot)
 scheduler = AsyncIOScheduler()

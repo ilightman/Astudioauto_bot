@@ -3,16 +3,16 @@ from datetime import datetime, timedelta
 import requests
 
 
-async def pochta_delivery(to_index: int, weight=None, price=None, from_index=125476) -> str:
+async def pochta_delivery(to_index: int, price: str = None, weight: str = None, from_index: int = 125476) -> str:
     url_base = 'https://delivery.pochta.ru/v2/calculate'
-    if weight and price:
-        # расчет тарифа и контрольные сроки
+    if price and weight:
+        # расчет стоимость и срока доставки
         url_base += '/tariff/'
         pack = 40 if int(weight) > 2000 else 20 if 1000 < int(weight) <= 2000 else 10  # s-10, m-20, l-30, xl-40
         params = {'object': '4040', 'weight': weight, 'pack': pack,
                   'sumoc': f'{price}00'}
     else:
-        # только сроки доставки
+        # расчет только срока доставки
         params = {'object': '27040', 'weight': '1000', 'pack': '20'}
 
     params['from'], params['to'] = from_index, to_index
@@ -27,7 +27,7 @@ async def pochta_delivery(to_index: int, weight=None, price=None, from_index=125
         delivery_days_str = f'Срок доставки:  <b>{delivery_days}</b> дн.\nДоставка:  до <b>{delivery_deadline}</b>'
         if price:
             pay_nds = resp_json["paynds"]
-            return f'Стоимость:  <b>{float(pay_nds / 100):5.2f}</b> руб. \n' + delivery_days_str
+            return f'Стоимость:  <b>{float(pay_nds / 100):5.2f}</b> руб. \n {delivery_days_str}'
         else:
             return delivery_days_str
 
