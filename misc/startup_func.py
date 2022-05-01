@@ -36,10 +36,10 @@ async def on_startup(dp):
     from main import scheduler
     await price_download_scheduler(scheduler)
     scheduler.start()
-    await _log_and_notify_admin("Бот запущен и готов к работе")
+    await _log_and_notify_admin("Бот запущен и готов к работе", startup_or_shutdown=True)
 
 
 async def on_shutdown(dp):
     from main import scheduler
     scheduler.shutdown()
-    await _log_and_notify_admin("Бот выключается")
+    await _log_and_notify_admin("Бот выключается", startup_or_shutdown=True)
