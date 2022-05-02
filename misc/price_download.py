@@ -78,4 +78,4 @@ async def _download_to_io_upload_yadisk():
             continue
         finally:
             await y.close()
-    await _log_and_notify_admin('Все файлы скачаны и загружены на Яндекс диск')
+    await _log_and_notify_admin('Все файлы скачаны и загружены на Яндекс диск', exception=True)
