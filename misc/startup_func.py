@@ -12,13 +12,17 @@ async def price_download_scheduler(scheduler: AsyncIOScheduler):
     cur_time = datetime.datetime.now(tz=ZoneInfo('Europe/Moscow')).time()
     start_time = (datetime.time(hour=9), datetime.time(hour=12))
     if cur_time > start_time[0]:
+        await _log_and_notify_admin('started to download')
         scheduler.add_job(_download_to_io_upload_yadisk, timezone=ZoneInfo('Europe/Moscow'))
         if cur_time < start_time[1]:
+            await _log_and_notify_admin('add schedule to 12:10')
             scheduler.add_job(_download_to_io_upload_yadisk, "cron", day_of_week='mon-sun',
                               hour=12, minute=10, timezone=ZoneInfo('Europe/Moscow'))
     elif cur_time < start_time[0]:
+        await _log_and_notify_admin('add schedule to 9:10')
         scheduler.add_job(_download_to_io_upload_yadisk, "cron", day_of_week='mon-sun',
                           hour=9, minute=10, timezone=ZoneInfo('Europe/Moscow'))
+        await _log_and_notify_admin('add schedule to 12:10')
         scheduler.add_job(_download_to_io_upload_yadisk, "cron", day_of_week='mon-sun',
                           hour=12, minute=10, timezone=ZoneInfo('Europe/Moscow'))
 
