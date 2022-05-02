@@ -15,7 +15,8 @@ async def _carav_price_url():
         with MailBox('imap.yandex.ru').login(username=os.getenv("YANDEX_USERNAME"),
                                              password=os.getenv("YANDEX_PASSWORD"),
                                              initial_folder='CARAV (СтудияМосква)') as mailbox:
-            email_msg = list(mailbox.fetch(limit=1, charset='utf8', reverse=True))[0].text
+            email_msg = list(_.text for _ in mailbox.fetch(limit=2, charset='utf8', reverse=True))
+            email_msg = email_msg[0] if 'Прайс-лист' in email_msg[0] else email_msg[1]
             li = email_msg.splitlines()
             name, subscr_url = li[7].strip()[1:-1], li[8][1:-2]
             resp = requests.get(subscr_url).text
