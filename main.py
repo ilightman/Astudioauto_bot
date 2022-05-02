@@ -20,7 +20,6 @@ logging.Formatter.converter = custom_time
 
 admins = getenv("ADMINS").split() if getenv("ADMINS") else ''
 admins.append(getenv("ADMIN"))
-print(admins)
 
 bot = Bot(token=getenv("BOT_TOKEN"), parse_mode=types.ParseMode.HTML)
 dp = Dispatcher(bot)
