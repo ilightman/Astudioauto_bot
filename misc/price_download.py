@@ -19,15 +19,13 @@ async def _carav_price_url():
             email_msg = email_msg[0] if 'Прайс-лист' in email_msg[0] else email_msg[1]
             li = email_msg.splitlines()
             name, subscr_url = li[7].strip()[1:-1], li[8][1:-2]
-            resp = requests.get(subscr_url).text
-            str1 = resp.split('&retpath=')[1].split('"')[0]
-            url = "https://cloud-api.yandex.net/v1/disk/public/resources?public_key=" + str1
+            r = requests.head(subscr_url)
+            url = "https://cloud-api.yandex.net/v1/disk/public/resources?public_key=" + r.next.url
             response_data = requests.get(url)
             c_name = response_data.json().get('name')
             c_url = response_data.json().get('file')
             c_name = name + ' ' + c_name
             await _log_and_notify_admin('successfully retrieving name and url from mail')
-
             return c_name, c_url
     except Exception as e:
         await _log_and_notify_admin(f"Couldn't retrieve name and url from mail: {e}", exception=True)
