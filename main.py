@@ -6,6 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from dotenv import load_dotenv
 
 from misc import on_startup, on_shutdown
 
@@ -17,6 +18,8 @@ def custom_time(*args):
 logging.basicConfig(format='%(asctime)s:%(funcName)s:%(message)s', level=logging.INFO,
                     datefmt="%Y-%m-%d %H:%M:%S")
 logging.Formatter.converter = custom_time
+
+load_dotenv()
 
 admins = getenv("ADMINS").split() if getenv("ADMINS") else ''
 admins.append(getenv("ADMIN"))
