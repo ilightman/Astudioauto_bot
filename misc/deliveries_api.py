@@ -1,6 +1,45 @@
-from datetime import datetime, timedelta
-
+from datetime import timedelta
 import requests
+from datetime import datetime
+from math import acos, sin, cos, radians
+from os import getenv
+
+from aiogram import types
+from cdek.api import CDEKClient
+
+
+def _calculate_distance(location_1: types.Location, location_2: types.Location) -> int:
+    """Считает приблизительное расстояние в метрах между двумя точками по координатам"""
+    earth_radius = 6372795
+    lx1, ly1 = radians(location_1.latitude), radians(location_1.longitude)
+    lx2, ly2 = radians(location_2.latitude), radians(location_2.longitude)
+    c_lx1, c_lx2 = cos(lx1), cos(lx2)
+    s_lx1, s_lx2 = sin(lx1), sin(lx2)
+    distance1 = acos(s_lx1 * s_lx2 + c_lx1 * c_lx2 * cos(ly2 - ly1))
+    return round(distance1 * earth_radius)
+
+
+def _get_nearby_points_distance(points_list: list[dict[str, list]], ) -> str:
+    pass
+
+
+def cdek_nearby_delivery_point(index: int):
+    cdek_id = getenv('CDEK_ID')
+    cdek_pass = getenv('CDEK_PASS')
+    client = CDEKClient(cdek_id, cdek_pass)
+    cdek_points = client.get_delivery_points(city_post_code=index, point_type='ALL', allowed_cod=True)
+    _get_nearby_points_distance(cdek_points.get('pvz'))
+    # pprint(cdek_points.get('pvz'))
+
+
+# cdek_nearby_delivery_point(143405)
+# y             x
+# 55.815340, 37.353062
+# 55.874826, 37.357528
+# my_cords = types.Location(latitude=55.815340, longitude=37.353062)
+# test_cords = types.Location(latitude=55.814826, longitude=37.357528)
+# my_cords.latitude, my_cords.longitude = 55.81534, 37.353062
+# test_cords.latitude, test_cords.longitude = 55.874826, 37.357528
 
 
 async def pochta_delivery(to_index: int, price: str = None, weight: str = None, from_index: int = 125476) -> str:
