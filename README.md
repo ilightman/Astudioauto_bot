@@ -1,4 +1,7 @@
 ## Astudioauto-bot
+
+**[BOT_LINK](]https://t.me/astudio_work_bot)**
+
 Бот для автоматизации повседневных действия сотрудников и клиентов интернет-магазина: 
 [carautostudio.ru](https://carautostudio.ru)
 
