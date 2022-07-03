@@ -117,6 +117,4 @@ dmypy.json
 .idea/
 
 /tests/
-
-# temporary due to suppliers visible urls
-misc/price_download.py
+config.py
