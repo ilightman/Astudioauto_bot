@@ -1,17 +1,13 @@
 import io
 import os
-from collections import namedtuple
 from typing import Iterable
 
 import requests
 import yadisk_async
 from imap_tools import MailBox
 
+from config import default_email_folder, NameLink, default_remote_folder, suppliers
 from misc.admin_services import _log_and_notify_admin
-
-NameLink = namedtuple("NameLink", 'name url')
-default_email_folder = 'CARAV (СтудияМосква)'
-default_remote_folder = '/Прайсы/Ежедневные/'
 
 
 async def _download_file_to_io(url: str) -> io.BytesIO:
@@ -23,15 +19,12 @@ async def _download_file_to_io(url: str) -> io.BytesIO:
     return file_in_io
 
 
-async def _download_email_messages(imap: str = 'imap.yandex.ru',
-                                   email_username: str = os.getenv("YANDEX_USERNAME"),
-                                   email_password: str = os.getenv("YANDEX_PASSWORD"),
-                                   initial_folder: str = default_email_folder,
+async def _download_email_messages(imap: str, email_username: str, email_password: str, initial_folder: str,
                                    msg_qty: int = 2, ) -> tuple:
     """Получает последние msg_qty(количество) сообщений и возвращает кортеж текстов этих сообщений"""
-    with MailBox(imap).login(username=email_username, password=email_password,
-                             initial_folder=initial_folder) as mailbox:
-        messages = tuple(_.text for _ in mailbox.fetch(limit=msg_qty, charset='utf8', reverse=True))
+    with MailBox(host=imap).login(username=email_username, password=email_password,
+                                  initial_folder=initial_folder) as mb:
+        messages = tuple(_.text for _ in mb.fetch(limit=msg_qty, charset='utf8', reverse=True))
     return messages
 
 
@@ -46,9 +39,9 @@ async def _parse_email_message(email_messages: Iterable) -> NameLink | None:
         return None
 
 
-async def _download_file_from_yadisk(url: str):
-    """Скачивает файл с yandex disk по указанной ссылке, или обращается к этой ссылке,
-    если в ней редирект на ссылку яндекс диск"""
+async def _check_or_get_yadisk_url(url: str) -> requests.Response:
+    """Проверяет является ли данная ссылка - ссылкой на файл который принадлежит yadisk,
+    если ссылка редиректная, то переходит по ней и там находит корректный url"""
     if not url.startswith(('https://disk.yandex.ru/', 'https://yadi.sk/')):
         resp = requests.head(url)
         url = resp.next.url
@@ -59,9 +52,12 @@ async def _download_file_from_yadisk(url: str):
 
 async def _carav_price_url() -> NameLink | None:
     """Находит в письме ссылка на скачку и возвращает объект NameLink с именем и ссылкой на скачивание файла"""
-    email_messages = await _download_email_messages()
+    email_messages = await _download_email_messages(imap='imap.yandex.ru',
+                                                    email_username=os.getenv("YANDEX_USERNAME"),
+                                                    email_password=os.getenv("YANDEX_PASSWORD"),
+                                                    initial_folder=default_email_folder)
     email_data = await _parse_email_message(email_messages)
-    response_data = await _download_file_from_yadisk(email_data.url)
+    response_data = await _check_or_get_yadisk_url(email_data.url)
     if email_data:
         await _log_and_notify_admin('successfully retrieving name and url from mail')
         return NameLink(name=f'{email_data.name} {response_data.json().get("name")}',
@@ -83,13 +79,8 @@ async def _clear_remote_dir(y_client: yadisk_async.YaDisk, yadisk_remote_folder:
 
 async def download_prices_to_yadisk():
     await _log_and_notify_admin('Скачиваю прайс-листы')
-    suppliers_tuple = (
-        NameLink(name='farcar.xlsx', url='https://www.dropbox.com/s/3l04xay6nd5omyf/Прайс FarCar.xlsx?dl=1'),
-        NameLink(name='ergo.xls', url='http://www.ergoauto.ru/uploads/Prays-list%20OBShchIY%20(XLS).xls'),
-        NameLink(name='carmedia.xlsx',
-                 url='https://www.dropbox.com/sh/l2ifpaeheeexht2/AAAj4FSZneMGjqdgXVaB5NhGa/Price%20List%20of%20Car%20DVD%20Navigation-%20wholesales-web2.4.xlsx?dl=1'),
-    )
-    carav_price: NameLink = await _carav_price_url()
+    suppliers_tuple = suppliers
+    carav_price = await _carav_price_url()
     suppliers_tuple += (carav_price,) if carav_price else ()
 
     y = yadisk_async.YaDisk(token=os.getenv("YADISK_TOKEN"))
